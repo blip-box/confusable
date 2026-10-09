@@ -1,0 +1,107 @@
+[project]
+name = "confusable"
+version = "0.1.0.dev0"
+description = "Unicode spoofing and confusable detection (UTS #39) in pure Python."
+readme = "README.md"
+authors = [
+    { name = "Atilla Guzel", email = "33524244+atillaguzel@users.noreply.github.com" }
+]
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+dependencies = []
+keywords = [
+    "unicode",
+    "confusables",
+    "homoglyph",
+    "homograph",
+    "spoofing",
+    "uts39",
+    "identifier",
+    "security",
+]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
+    "Topic :: Security",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Text Processing :: Linguistic",
+    "Typing :: Typed",
+]
+
+[project.urls]
+Homepage = "https://github.com/blip-box/confusable"
+Repository = "https://github.com/blip-box/confusable"
+Issues = "https://github.com/blip-box/confusable/issues"
+Changelog = "https://github.com/blip-box/confusable/releases"
+
+[build-system]
+requires = ["uv_build>=0.12.24,<0.13.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+# The CI test matrix installs only "test". Linters stay out of it because some of
+# their dependencies (pyyaml, via pre-commit) lag behind new Python releases.
+test = [
+    "hypothesis>=6.168.5",
+    "pytest>=9.1.1",
+]
+lint = [
+    { include-group = "test" }, # mypy checks the tests too
+    "mypy>=2.4.0",
+    "pre-commit>=4.6.2",
+]
+
+[tool.uv]
+default-groups = ["test", "lint"]
+
+[tool.pytest.ini_options]
+minversion = "9.0"
+addopts = ["-ra", "--strict-markers", "--strict-config", "--import-mode=importlib"]
+testpaths = ["tests"]
+xfail_strict = true
+filterwarnings = ["error"]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+warn_unreachable = true
+files = ["src", "tests"]
+
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "W",   # pycodestyle warnings
+    "D",   # pydocstyle
+    "I",   # isort
+    "UP",  # pyupgrade
+    "N",   # pep8-naming
+    "B",   # flake8-bugbear
+    "PT",  # flake8-pytest-style
+    "RUF", # ruff-specific rules
+]
+ignore = [
+    "D203", # one-blank-line-before-class (conflicts with D211)
+    "D213", # multi-line-summary-second-line (conflicts with D212)
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests are full of deliberate look-alike characters, which is the point of the
+# library, so the ambiguous-unicode rules would flag every fixture.
+"tests/**" = ["D", "RUF001", "RUF002", "RUF003"]
+
+[tool.ruff.format]
+docstring-code-format = true
