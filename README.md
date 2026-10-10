@@ -4,8 +4,9 @@ Unicode spoofing and confusable detection for Python, following
 [Unicode Technical Standard #39](https://www.unicode.org/reports/tr39/). Pure Python,
 no runtime dependencies.
 
-> **Status: pre-alpha.** This repository contains only the project scaffold. Nothing
-> is on PyPI yet, and the features below are planned, not implemented.
+> **Status: pre-alpha.** This repository contains the project scaffold and the
+> conformance test harness. Nothing is on PyPI yet, and the features below are
+> planned, not implemented.
 
 ## What it is for
 
@@ -30,6 +31,15 @@ username, display name, project name, slug or filename. Planned for v1:
 The Unicode data is pinned to a single Unicode version (18.0.0) and generated into the
 package, so installing needs no network access and no compiler.
 
+## Correctness
+
+A look-alike that slips through is a security bug, so the tests come first. Every
+operation is checked against two independent implementations of UTS #39, ICU and
+the Rust `unicode-security` crate, over every Unicode code point and a corpus of
+known attacks and generated strings. Both oracles run at the pinned Unicode
+version, and every place where they differ is explained by a specific rule. See
+[tools/oracles/README.md](tools/oracles/README.md).
+
 ## Development
 
 ```bash
@@ -48,6 +58,6 @@ To report a vulnerability, see [SECURITY.md](.github/SECURITY.md).
 
 ## License
 
-MIT. See [LICENSE](LICENSE). The Unicode data files the package is generated from are
-under the [Unicode License v3](https://www.unicode.org/license.txt); that notice will
-ship alongside the generated data.
+MIT. See [LICENSE](LICENSE). The Unicode data the package and its test fixtures are
+generated from is under the Unicode License v3; see
+[LICENSES/Unicode-3.0.txt](LICENSES/Unicode-3.0.txt).

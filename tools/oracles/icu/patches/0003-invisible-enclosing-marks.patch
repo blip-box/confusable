@@ -1,0 +1,17 @@
+UTS #39 revision 34 (Unicode 18) clarifies in section 5.4 that a "nonspacing
+mark" includes both gc=Mn and gc=Me. ICU's INVISIBLE check, which forbids the
+same nonspacing mark twice in a row, only looks at gc=Mn; this patch adds gc=Me.
+Drop it once ICU implements the clarification upstream.
+
+--- a/source/i18n/uspoof.cpp
++++ b/source/i18n/uspoof.cpp
+@@ -630,7 +630,8 @@
+         for (i=0; i<nfdLength ;) {
+             c = nfdText.char32At(i);
+             i += U16_LENGTH(c);
+-            if (u_charType(c) != U_NON_SPACING_MARK) {
++            // UTS #39 revision 34: "nonspacing mark" means gc=Mn or gc=Me.
++            if (u_charType(c) != U_NON_SPACING_MARK && u_charType(c) != U_ENCLOSING_MARK) {
+                 firstNonspacingMark = 0;
+                 if (haveMultipleMarks) {
+                     marksSeenSoFar.clear();
