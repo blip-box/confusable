@@ -28,3 +28,9 @@ htmlcov/
 .idea/
 .vscode/
 .DS_Store
+
+# Oracle builds and downloaded Unicode sources
+tools/.cache/
+tools/oracles/icu/.build/
+tools/oracles/rust/target/
+tools/oracles/rust/vendor/

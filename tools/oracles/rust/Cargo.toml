@@ -1,0 +1,21 @@
+[package]
+name = "confusable-oracle"
+version = "0.0.0"
+edition = "2021"
+publish = false
+description = "Rust oracle for confusable's conformance fixtures"
+
+[dependencies]
+unicode-normalization = "=0.1.25"
+unicode-script = "=0.5.8"
+unicode-security = "=0.1.2"
+
+# tools/oracles/rust_regen.py writes these: the same releases, with tables
+# regenerated for the Unicode version confusable pins.
+[patch.crates-io]
+unicode-normalization = { path = "vendor/unicode-normalization" }
+unicode-script = { path = "vendor/unicode-script" }
+unicode-security = { path = "vendor/unicode-security" }
+
+[profile.release]
+debug = false
