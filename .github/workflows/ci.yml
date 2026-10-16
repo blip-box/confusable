@@ -58,8 +58,10 @@ jobs:
       - run: uv sync --locked --no-default-groups --group test
       - run: uv run --no-sync pytest
 
-  oracles:
-    name: oracles
+  # Everything generated from Unicode data must match a fresh run: the package's
+  # data tables and the conformance fixtures.
+  generated:
+    name: generated
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -77,14 +79,14 @@ jobs:
             tools/oracles/icu/.build/*.tgz
             tools/oracles/rust/target
             ~/.cargo/registry
-          key: oracles-${{ runner.os }}-${{ hashFiles('tools/unicode_sources.py', 'tools/oracles/icu/build.sh', 'tools/oracles/icu/patches/*.patch', 'tools/oracles/rust/Cargo.lock', 'tools/oracles/rust_regen.py') }}
-      # Fails if the committed fixtures differ from what the oracles produce.
+          key: generated-${{ runner.os }}-${{ hashFiles('tools/unicode_sources.py', 'tools/oracles/icu/build.sh', 'tools/oracles/icu/patches/*.patch', 'tools/oracles/rust/Cargo.lock', 'tools/oracles/rust_regen.py') }}
+      - run: uv run --no-project --python 3.14 python -m tools.generate_tables --check
       - run: uv run --no-project --python 3.14 python -m tools.oracles.generate --check
 
   required:
     name: required
     if: always()
-    needs: [lint, test, oracles]
+    needs: [lint, test, generated]
     runs-on: ubuntu-latest
     permissions: {}
     steps:

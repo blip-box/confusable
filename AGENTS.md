@@ -15,10 +15,11 @@ with the API of `confusable_homoglyphs` 3.3.1.
 
 ## Current state
 
-Packaging, CI, and the conformance harness: oracle fixtures for every v1
-operation and conformance tests that are strict xfails until the library
-implements each operation. The `confusable` package itself only exposes
-`__version__`; there is no Unicode data or detection code in it yet.
+Packaging, CI, the conformance harness, and the Unicode Bidirectional Algorithm
+that `skeleton` will need: `confusable._bidi`, with its generated tables in
+`confusable._data`. The conformance tests for everything else are strict xfails
+until the library implements it. The public package still only exposes
+`__version__`.
 
 ## Decisions
 
@@ -29,7 +30,8 @@ implements each operation. The `confusable` package itself only exposes
 | License | MIT for the code. Unicode data files are under the Unicode License v3; ship that notice next to the generated data. |
 | Unicode data | Generated Python tables are committed, so installs need no network. |
 | Unicode version | 18.0.0, stored in one place and exposed as `confusable.unicode_version`. Today that place is `tools/unicode_sources.py`. |
-| Specification | UTS #39 revision 34. Its `skeleton(X)` is `bidiSkeleton(LTR, X)`, which applies the Unicode Bidirectional Algorithm (UAX #9) before the confusable mapping. |
+| Specification | UTS #39 revision 34. Its `skeleton(X)` is `bidiSkeleton(LTR, X)`, which applies the Unicode Bidirectional Algorithm (UAX #9 revision 52) before the confusable mapping. v1 implements the full algorithm. |
+| Bidi fast path | UTS #39 says left-to-right text without R or AL characters keeps its order. That is wrong: a shortcut must also rule out AN, RLE, RLO and RLI (see `src/confusable/_bidi.py`). |
 | v1 scope | `skeleton()`, a two-string comparison (do not call it `is_confusable()` on a module named `confusable`), restriction levels, mixed-script detection, identifier status and type, invisible and control characters, UAX #31 `isxidstart`/`isxidcontinue` equivalents, grapheme iteration and safe truncation, and the compat module. |
 | Out of scope | Transliteration (use `anyascii`), generating confusable variants. |
 
@@ -45,17 +47,29 @@ uv run pre-commit run --all-files  # ruff, mypy, zizmor, actionlint, uv-lock, fi
 CI runs exactly these, so a clean local run means a clean CI run. The actionlint hook
 downloads its own Go toolchain on first run.
 
-To regenerate the conformance fixtures, or check them as CI's `oracles` job does
-(needs a C++ compiler and `cargo`; see `tools/oracles/README.md`):
+To regenerate the package's data tables in `src/confusable/_data/`, or check them:
+
+```bash
+uv run python -m tools.generate_tables
+uv run python -m tools.generate_tables --check
+```
+
+To regenerate the conformance fixtures, or check them (needs a C++ compiler and
+`cargo`; see `tools/oracles/README.md`):
 
 ```bash
 uv run --no-project --python 3.14 python -m tools.oracles.generate
 uv run --no-project --python 3.14 python -m tools.oracles.generate --check
 ```
 
+CI's `generated` job runs both checks.
+
 ## Layout
 
 - `src/confusable/`: the package. It ships `py.typed`; mypy runs in strict mode.
+- `src/confusable/_bidi.py`: the Unicode Bidirectional Algorithm, for bidiSkeleton.
+- `src/confusable/_data/`: generated Unicode tables. Never edit them by hand.
+- `tools/generate_tables.py`: writes `src/confusable/_data/` from the pinned sources.
 - `tests/`: pytest and hypothesis.
 - `tests/conformance/`: the conformance harness. `fixtures/` holds the generated
   oracle output, `attacks.py` the curated attack corpus, `oracle_data.py` reads
@@ -65,10 +79,11 @@ uv run --no-project --python 3.14 python -m tools.oracles.generate --check
 - `tools/oracles/`: the ICU and Rust oracles and the fixture generator.
 - `LICENSES/Unicode-3.0.txt`: the license of the Unicode data the fixtures and
   tables derive from.
-- `.github/workflows/ci.yml`: a `lint` job, the `test` matrix, an `oracles` job that
-  regenerates the fixtures and fails on any difference, and a `required` job that
-  fails unless all three succeed. Branch protection on `main` requires only
-  `required`, so the jobs can change without touching repository settings.
+- `.github/workflows/ci.yml`: a `lint` job, the `test` matrix, a `generated` job that
+  regenerates the data tables and the fixtures and fails on any difference, and a
+  `required` job that fails unless all three succeed. Branch protection on `main`
+  requires only `required`, so the jobs can change without touching repository
+  settings.
 - `.github/workflows/commit-lint.yml`: commitlint on the PR's commits and its title.
 - `.github/workflows/dependabot-auto-merge.yml`: auto-merge for non-major Dependabot PRs.
 - `.github/dependabot.yml`: weekly updates for uv, GitHub Actions and pre-commit
@@ -127,13 +142,14 @@ and listed with their hashes in `tools/unicode_sources.py`:
 - `ucd/`: `UnicodeData.txt`, `Scripts.txt`, `ScriptExtensions.txt`,
   `DerivedCoreProperties.txt`, `DerivedNormalizationProps.txt`, `PropList.txt`,
   `PropertyValueAliases.txt`, `StandardizedVariants.txt`, `NormalizationTest.txt`,
-  `auxiliary/GraphemeBreakProperty.txt`, `auxiliary/GraphemeBreakTest.txt`,
-  `emoji/emoji-data.txt`
+  `BidiBrackets.txt`, `BidiMirroring.txt`, `BidiTest.txt`, `BidiCharacterTest.txt`,
+  `extracted/DerivedBidiClass.txt`, `auxiliary/GraphemeBreakProperty.txt`,
+  `auxiliary/GraphemeBreakTest.txt`, `emoji/emoji-data.txt`
 - `emoji/`: `emoji-sequences.txt` (valid tag sequences), `emoji-zwj-sequences.txt`
 
-`bidiSkeleton` will also need `ucd/BidiMirroring.txt`, `ucd/BidiBrackets.txt` and
-`ucd/extracted/DerivedBidiClass.txt`, with `ucd/BidiCharacterTest.txt` as its
-conformance test; they are not pinned yet.
+Some files give defaults for unassigned code points in `# @missing:` lines rather
+than data lines (`DerivedBidiClass.txt` assigns R and AL by block this way); the
+generator must apply them before the data lines.
 
 `unicode_sources.py` verifies each file's version as well as its hash, and the
 formats differ: most `ucd/` files name it in the first line (`# Scripts-18.0.0.txt`),
@@ -145,8 +161,9 @@ its hash pins it.
 
 Each item is its own pull request:
 
-1. Data pipeline: the generator, the committed tables, and a scheduled regeneration
-   workflow that opens a PR when Unicode publishes a release.
+1. Data pipeline: the remaining tables in `tools/generate_tables.py` (the bidi
+   tables exist), and a scheduled regeneration workflow that opens a PR when
+   Unicode publishes a release.
 2. Core API, one PR per module where sensible, each wiring its operations into
    `tests/conformance/adapter.py`.
 3. `confusable.compat.homoglyphs`, with differential tests against

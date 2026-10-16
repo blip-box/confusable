@@ -29,6 +29,7 @@
 #include <vector>
 
 #include <unicode/brkiter.h>
+#include <unicode/ubidi.h>
 #include <unicode/locid.h>
 #include <unicode/normalizer2.h>
 #include <unicode/uchar.h>
@@ -159,6 +160,37 @@ UnicodeString bidiSkeleton(const USpoofChecker *sc, UBiDiDirection direction,
   UnicodeString out;
   uspoof_getBidiSkeletonUnicodeString(sc, direction, s, out, &status);
   check(status, "uspoof_getBidiSkeletonUnicodeString");
+  return out;
+}
+
+// R″ of UTS #39 bidiSkeleton: the text in display order, with combining marks
+// kept after their base (L3) and mirrored glyphs (L4), built the way the
+// patched uspoof_getBidiSkeleton builds it (patches 0002 and 0004): each
+// paragraph reordered as its own line.
+UnicodeString displayOrder(const UnicodeString &s, UBiDiLevel paragraphLevel) {
+  UErrorCode status = U_ZERO_ERROR;
+  UBiDi *bidi = ubidi_open();
+  UBiDi *line = ubidi_open();
+  ubidi_setPara(bidi, s.getBuffer(), s.length(), paragraphLevel, nullptr, &status);
+  UnicodeString out;
+  int32_t paragraphs = s.isEmpty() ? 0 : ubidi_countParagraphs(bidi);
+  for (int32_t p = 0; p < paragraphs && U_SUCCESS(status); ++p) {
+    int32_t start = 0;
+    int32_t limit = 0;
+    ubidi_getParagraphByIndex(bidi, p, &start, &limit, nullptr, &status);
+    ubidi_setLine(bidi, start, limit, line, &status);
+    if (U_FAILURE(status)) break;
+    int32_t capacity = 2 * (limit - start);
+    UnicodeString part;
+    UChar *buffer = part.getBuffer(capacity);
+    int32_t length = ubidi_writeReordered(line, buffer, capacity,
+                                          UBIDI_KEEP_BASE_COMBINING | UBIDI_DO_MIRRORING, &status);
+    part.releaseBuffer(U_SUCCESS(status) ? length : 0);
+    out.append(part);
+  }
+  ubidi_close(line);
+  ubidi_close(bidi);
+  check(status, "display order");
   return out;
 }
 
@@ -416,6 +448,11 @@ int strings(const char *confusablesPath, const char *inputPath) {
     if (internal != skeleton(builtin.sc, s)) die("built-in skeleton differs for " + line);
     UnicodeString ltr = bidiSkeleton(checker.sc, UBIDI_LTR, s);
     UnicodeString rtl = bidiSkeleton(checker.sc, UBIDI_RTL, s);
+    UnicodeString displayLtr = displayOrder(s, UBIDI_LTR);
+    UnicodeString displayRtl = displayOrder(s, UBIDI_RTL);
+    if (skeleton(checker.sc, displayLtr) != ltr || skeleton(checker.sc, displayRtl) != rtl) {
+      die("display order does not reproduce bidiSkeleton for " + line);
+    }
     UnicodeString normalized = nfd->normalize(s, status);
     check(status, "normalize");
 
@@ -449,7 +486,7 @@ int strings(const char *confusablesPath, const char *inputPath) {
     std::cout << hexSeq(ltr) << "\t" << hexSeq(internal) << "\t" << hexSeq(rtl) << "\t"
               << hexSeq(normalized) << "\t" << resolvedScriptSet(checker.sc, s) << "\t"
               << restrictionLevelName(level) << "\t" << failed << "\t" << zeros << "\t"
-              << boundaries << "\n";
+              << boundaries << "\t" << hexSeq(displayLtr) << "\t" << hexSeq(displayRtl) << "\n";
   }
   uspoof_closeCheckResult(result);
   return 0;

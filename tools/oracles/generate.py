@@ -16,8 +16,8 @@ Pass --check to compare against the committed fixtures instead of writing.
 from __future__ import annotations
 
 import argparse
+import gzip
 import re
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -139,25 +139,48 @@ def main() -> None:
     report = agreement.cross_check(strings, icu, rust)
 
     files = render(strings, pairs, icu, report, icu_label)
-    files["GraphemeBreakTest.txt"] = sources[
-        "ucd/auxiliary/GraphemeBreakTest.txt"
-    ].read_text(encoding="utf-8")
+    # Unicode's own conformance tests, as published; the large ones gzipped.
+    for name, path in (
+        ("GraphemeBreakTest.txt", "ucd/auxiliary/GraphemeBreakTest.txt"),
+        ("BidiCharacterTest.txt.gz", "ucd/BidiCharacterTest.txt"),
+        ("BidiTest.txt.gz", "ucd/BidiTest.txt"),
+    ):
+        files[name] = sources[path].read_text(encoding="utf-8")
+
+    stale = [name for name, text in files.items() if _read(FIXTURES / name) != text]
+    extra = sorted(p.name for p in FIXTURES.glob("*") if p.name not in files)
     if args.check:
-        stale = [
-            name
-            for name, text in files.items()
-            if not (FIXTURES / name).exists()
-            or (FIXTURES / name).read_text(encoding="utf-8") != text
-        ]
-        if stale:
-            raise SystemExit(f"fixtures differ from a fresh run: {', '.join(stale)}")
+        if stale or extra:
+            raise SystemExit(
+                f"fixtures differ from a fresh run: {', '.join(stale + extra)}"
+            )
         print("fixtures match a fresh run")
         return
-    shutil.rmtree(FIXTURES, ignore_errors=True)
-    FIXTURES.mkdir(parents=True)
-    for name, text in files.items():
-        (FIXTURES / name).write_text(text, encoding="utf-8", newline="\n")
-    print(f"wrote {len(files)} fixtures to {FIXTURES.relative_to(ROOT)}")
+    FIXTURES.mkdir(parents=True, exist_ok=True)
+    for name in extra:
+        (FIXTURES / name).unlink()
+    for name in stale:
+        _write(FIXTURES / name, files[name])
+    print(f"updated {len(stale)}, removed {len(extra)} fixtures")
+
+
+def _read(path: Path) -> str | None:
+    """Read a fixture, decompressing .gz files; None if it does not exist."""
+    if not path.exists():
+        return None
+    if path.suffix == ".gz":
+        return gzip.decompress(path.read_bytes()).decode("utf-8")
+    return path.read_text(encoding="utf-8")
+
+
+def _write(path: Path, text: str) -> None:
+    if path.suffix == ".gz":
+        # mtime=0 keeps timestamps out. Comparisons use the decompressed text,
+        # so zlib builds that compress differently do not matter.
+        data = gzip.compress(text.encode("utf-8"), compresslevel=9, mtime=0)
+        path.write_bytes(data)
+    else:
+        path.write_text(text, encoding="utf-8", newline="\n")
 
 
 def render(
@@ -225,7 +248,7 @@ def render(
 
     rows = []
     for text, line in zip(strings, icu["strings"].splitlines(), strict=True):
-        ltr, internal, rtl, nfd, *rest = line.split("\t")
+        ltr, internal, rtl, nfd, *rest, display_ltr, display_rtl = line.split("\t")
         source = hex_seq(text)
         rows.append(
             "\t".join(
@@ -236,6 +259,8 @@ def render(
                     same_as(rtl, ltr),
                     same_as(nfd, source),
                     *rest,
+                    same_as(display_ltr, source),
+                    same_as(display_rtl, source),
                 ]
             )
         )
@@ -252,7 +277,10 @@ def render(
             "row), MIXED_NUMBERS (digits from more than one decimal system),",
             "HIDDEN_OVERLAY (a mark hidden by its base). Column 9 lists the zero",
             "digit of each decimal system used. Column 10 lists grapheme cluster",
-            "boundaries as code point offsets.",
+            "boundaries as code point offsets. Columns 11 and 12 are R″ of",
+            "bidiSkeleton: the input in display order, with combining marks after",
+            "their base (UAX #9 L3) and mirrored glyphs (L4). internalSkeleton of",
+            "column 11 is column 2, and of column 12 is column 4.",
         ],
         [
             "input",
@@ -265,6 +293,8 @@ def render(
             "failed ICU checks",
             "decimal zeros",
             "grapheme boundaries",
+            "display order LTR [1]",
+            "display order RTL [1]",
         ],
         icu_label,
     ) + "".join(row + "\n" for row in rows)

@@ -105,6 +105,26 @@ SOURCES: dict[str, Source] = {
             None,
         ),
         _ucd(
+            "BidiBrackets.txt",
+            "4b3b62e4a14b84ee752808c810c602534921c09a4a1bf78cfbee566d66c125b3",
+        ),
+        _ucd(
+            "BidiCharacterTest.txt",
+            "045b24d2c8ab066951bd32fe8c6b4de34647f72b5b1c7df0265f24ab53573e01",
+        ),
+        _ucd(
+            "BidiMirroring.txt",
+            "cd54810ebf52f0e61a730c8b9cb25975de6c85f6d788a559b416afd548923fd6",
+        ),
+        _ucd(
+            "BidiTest.txt",
+            "9af2f882a4ab50912e388f069a673b94eacd82fa6d07d20a3ff7f3c759e905aa",
+        ),
+        _ucd(
+            "extracted/DerivedBidiClass.txt",
+            "d9e23222522551348ea1ccfbb4f62efbf98982afb95840f8959c08ed992c5607",
+        ),
+        _ucd(
             "auxiliary/GraphemeBreakProperty.txt",
             "0839dcb79e4ac639ecd538b1abf7c9d22e3f9dd265b7e182d33627aa4d75b45a",
         ),

@@ -224,6 +224,18 @@ ATTACKS: tuple[Attack, ...] = (
     Attack("devanagari-conjunct", "क्ष", "conjunct across a virama (GB9c)"),
     Attack("hangul-jamo", "각", "conjoining jamo: one syllable"),
     Attack("crlf", "a\r\nb", "CR LF stays one grapheme"),
+    # Paragraphs: UAX #9 reorders text only within a paragraph.
+    Attack(
+        "rtl-two-paragraphs",
+        "\u05d0\u05d1\n\u05d2\u05d3",
+        "two right-to-left paragraphs keep their logical order",
+    ),
+    Attack(
+        "paragraph-separator",
+        "a\u2029\u05d0b",
+        "PARAGRAPH SEPARATOR between Latin and Hebrew",
+    ),
+    Attack("lf-cr", "a\n\rb", "LF then CR: two paragraph separators, not one"),
     # Edge cases.
     Attack("empty", "", "the empty string"),
     Attack("ascii-space", "pay pal", "a space, outside the identifier profile"),
