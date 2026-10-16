@@ -58,10 +58,33 @@ jobs:
       - run: uv sync --locked --no-default-groups --group test
       - run: uv run --no-sync pytest
 
+  oracles:
+    name: oracles
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      # Building ICU takes minutes; reuse the build while its inputs are unchanged.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            tools/.cache
+            tools/oracles/icu/.build/icu-*
+            tools/oracles/icu/.build/*.tgz
+            tools/oracles/rust/target
+            ~/.cargo/registry
+          key: oracles-${{ runner.os }}-${{ hashFiles('tools/unicode_sources.py', 'tools/oracles/icu/build.sh', 'tools/oracles/icu/patches/*.patch', 'tools/oracles/rust/Cargo.lock', 'tools/oracles/rust_regen.py') }}
+      # Fails if the committed fixtures differ from what the oracles produce.
+      - run: uv run --no-project --python 3.14 python -m tools.oracles.generate --check
+
   required:
     name: required
     if: always()
-    needs: [lint, test]
+    needs: [lint, test, oracles]
     runs-on: ubuntu-latest
     permissions: {}
     steps:

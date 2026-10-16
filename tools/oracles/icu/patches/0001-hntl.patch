@@ -1,0 +1,26 @@
+UTS #39 revision 34 (Unicode 18) adds Hntl (Traditional Han with Latin) to the
+augmented script sets of Han and Latin characters. ICU 79 defines the script
+code but its spoof checker does not add it yet; this patch does. Drop it once
+ICU implements the rule upstream.
+
+--- a/source/i18n/uspoof_impl.cpp
++++ b/source/i18n/uspoof_impl.cpp
+@@ -244,6 +244,7 @@
+     // Section 5.1 step 1
+     if (result.test(USCRIPT_HAN, status)) {
+         result.set(USCRIPT_HAN_WITH_BOPOMOFO, status);
++        result.set(USCRIPT_TRADITIONAL_HAN_WITH_LATIN, status);
+         result.set(USCRIPT_JAPANESE, status);
+         result.set(USCRIPT_KOREAN, status);
+     }
+@@ -259,6 +260,10 @@
+     if (result.test(USCRIPT_BOPOMOFO, status)) {
+         result.set(USCRIPT_HAN_WITH_BOPOMOFO, status);
+     }
++    // UTS #39 revision 34 (Unicode 18): Latin also gets Hntl.
++    if (result.test(USCRIPT_LATIN, status)) {
++        result.set(USCRIPT_TRADITIONAL_HAN_WITH_LATIN, status);
++    }
+ 
+     // Section 5.1 step 2
+     if (result.test(USCRIPT_COMMON, status) || result.test(USCRIPT_INHERITED, status)) {

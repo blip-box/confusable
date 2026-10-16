@@ -9,13 +9,20 @@ repos:
     rev: v6.0.0
     hooks:
       - id: check-added-large-files
+        args: [--maxkb=1024]
       - id: check-merge-conflict
       - id: check-toml
       - id: check-yaml
+      # Generated fixtures are byte-for-byte oracle output (rows may end in
+      # empty tab-separated fields), checked by generate.py --check. Patches
+      # need the single space that marks a blank context line.
       - id: end-of-file-fixer
+        exclude: ^tests/conformance/fixtures/
       - id: mixed-line-ending
         args: [--fix=lf]
+        exclude: ^tests/conformance/fixtures/
       - id: trailing-whitespace
+        exclude: ^tests/conformance/fixtures/|\.patch$
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.16.10

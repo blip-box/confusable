@@ -68,6 +68,7 @@ default-groups = ["test", "lint"]
 minversion = "9.0"
 addopts = ["-ra", "--strict-markers", "--strict-config", "--import-mode=importlib"]
 testpaths = ["tests"]
+pythonpath = ["."]
 xfail_strict = true
 filterwarnings = ["error"]
 
@@ -75,7 +76,9 @@ filterwarnings = ["error"]
 python_version = "3.10"
 strict = true
 warn_unreachable = true
-files = ["src", "tests"]
+files = ["src", "tests", "tools"]
+# Oracle build output, including the vendored crates' Python generators.
+exclude = ['^tools/oracles/rust/(vendor|target)/', '^tools/oracles/icu/\.build/', '^tools/\.cache/']
 
 [tool.ruff]
 line-length = 88
@@ -102,6 +105,8 @@ ignore = [
 # Tests are full of deliberate look-alike characters, which is the point of the
 # library, so the ambiguous-unicode rules would flag every fixture.
 "tests/**" = ["D", "RUF001", "RUF002", "RUF003"]
+# Internal tooling: module docstrings explain the scripts; helpers need none.
+"tools/**" = ["D1"]
 
 [tool.ruff.format]
 docstring-code-format = true

@@ -1,0 +1,29 @@
+uspoof_getBidiSkeleton sizes the reordered buffer to the input length, but
+mirroring can lengthen the text: in Unicode 18, U+221D PROPORTIONAL TO mirrors
+to U+1DB10, which needs a surrogate pair. ICU 79.1rc then fails with
+U_BUFFER_OVERFLOW_ERROR. Drop this patch once ICU fixes it upstream.
+
+--- a/source/i18n/uspoof.cpp
++++ b/source/i18n/uspoof.cpp
+@@ -742,16 +742,17 @@
+         return dest;
+     }
+     UnicodeString reordered;
+-    int32_t const size = ubidi_getProcessedLength(bidi);
+-    UChar* const reorderedBuffer = reordered.getBuffer(size);
++    // Mirroring can lengthen the text: U+221D mirrors to U+1DB10 in Unicode 18.
++    int32_t const capacity = 2 * ubidi_getProcessedLength(bidi);
++    UChar* const reorderedBuffer = reordered.getBuffer(capacity);
+     if (reorderedBuffer == nullptr) {
+         *status = U_MEMORY_ALLOCATION_ERROR;
+         ubidi_close(bidi);
+         return dest;
+     }
+-    ubidi_writeReordered(bidi, reorderedBuffer, size,
++    int32_t const length = ubidi_writeReordered(bidi, reorderedBuffer, capacity,
+                          UBIDI_KEEP_BASE_COMBINING | UBIDI_DO_MIRRORING, status);
+-    reordered.releaseBuffer(size);
++    reordered.releaseBuffer(U_SUCCESS(*status) ? length : 0);
+     ubidi_close(bidi);
+ 
+     if (U_FAILURE(*status)) {
