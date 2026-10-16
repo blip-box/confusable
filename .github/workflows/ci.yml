@@ -83,10 +83,29 @@ jobs:
       - run: uv run --no-project --python 3.14 python -m tools.generate_tables --check
       - run: uv run --no-project --python 3.14 python -m tools.oracles.generate --check
 
+  # GitHub disables scheduled workflows after 60 days without repository
+  # activity. Fail CI while one is disabled, so a person notices.
+  scheduled:
+    name: scheduled
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read # read the state of the scheduled workflows
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          state=$(gh api "repos/$GH_REPO/actions/workflows" --jq '.workflows[] | select(.path == ".github/workflows/unicode-release.yml") | .state')
+          # Empty until the workflow first reaches the default branch.
+          if [ -n "$state" ] && [ "$state" != "active" ]; then
+            echo "::error::unicode-release.yml is $state. Re-enable it: gh workflow enable unicode-release.yml"
+            exit 1
+          fi
+
   required:
     name: required
     if: always()
-    needs: [lint, test, generated]
+    needs: [lint, test, generated, scheduled]
     runs-on: ubuntu-latest
     permissions: {}
     steps:

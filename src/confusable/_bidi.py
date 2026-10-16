@@ -25,22 +25,20 @@ Latin letters, and a neutral between two AN digits resolves to R.
 
 from __future__ import annotations
 
-from bisect import bisect_right
 from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Literal
 
 from confusable._data import bidi as _data
+from confusable._lookup import Ranges, Runs
 
 Direction = Literal["LTR", "RTL", "auto"]
 
 MAX_DEPTH = 125
 _BRACKET_STACK_SIZE = 63
 
-_CLASS_STARTS = tuple(first for first, _ in _data.BIDI_CLASS_RUNS)
-_CLASS_VALUES = tuple(value for _, value in _data.BIDI_CLASS_RUNS)
-_MARK_FIRSTS = tuple(first for first, _ in _data.COMBINING_MARK_RANGES)
-_MARK_LASTS = tuple(last for _, last in _data.COMBINING_MARK_RANGES)
+_BIDI_CLASS = Runs(_data.BIDI_CLASS_RUNS)
+_COMBINING_MARKS = Ranges(_data.COMBINING_MARK_RANGES)
 
 _ISOLATE_INITIATORS = frozenset({"LRI", "RLI", "FSI"})
 _EMBEDDING_INITIATORS = frozenset({"LRE", "RLE", "LRO", "RLO"})
@@ -53,12 +51,7 @@ _TRAILING = frozenset({"WS", "LRI", "RLI", "FSI", "PDI"})
 
 def bidi_class(cp: int) -> str:
     """Return the Bidi_Class of a code point, as its short name."""
-    return _CLASS_VALUES[bisect_right(_CLASS_STARTS, cp) - 1]
-
-
-def _is_mark(cp: int) -> bool:
-    i = bisect_right(_MARK_FIRSTS, cp) - 1
-    return i >= 0 and cp <= _MARK_LASTS[i]
+    return _BIDI_CLASS[cp]
 
 
 def _odd_above(level: int) -> int:
@@ -538,7 +531,7 @@ def display(text: str, direction: Direction) -> str:
             j = last
             while j > first:
                 k = j - 1
-                while k > first and _is_mark(code_points[start + k]):
+                while k > first and code_points[start + k] in _COMBINING_MARKS:
                     k -= 1
                 base = code_points[start + k]
                 out.append(chr(_data.BIDI_MIRRORING_GLYPH.get(base, base)))

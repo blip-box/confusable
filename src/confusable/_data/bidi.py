@@ -5,11 +5,8 @@ tools/generate_tables.py; do not edit. Derived from Unicode data:
 see LICENSES/Unicode-3.0.txt.
 """
 
-UNICODE_VERSION = "18.0.0"
-
-# Bidi_Class, as runs: each entry starts a run of code points with that
-# class, which lasts until the next entry. Unassigned code points get
-# the defaults from the @missing lines of DerivedBidiClass.txt.
+# Bidi_Class. Unassigned code points get the defaults from the
+# @missing lines of DerivedBidiClass.txt.
 BIDI_CLASS_RUNS: tuple[tuple[int, str], ...] = (
     (0x0000, "BN"),
     (0x0009, "S"),
@@ -1867,8 +1864,8 @@ BRACKET_CANONICAL: dict[int, int] = {
     0x232A: 0x3009,
 }
 
-# Runs of General_Category=Mark (Mn, Mc, Me), the combining marks that
-# rule L3 keeps after their base: (first, last) code points.
+# General_Category=Mark (Mn, Mc, Me): the combining marks that rule
+# L3 keeps after their base.
 COMBINING_MARK_RANGES: tuple[tuple[int, int], ...] = (
     (0x0300, 0x036F),
     (0x0483, 0x0489),
