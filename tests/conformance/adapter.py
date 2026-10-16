@@ -16,6 +16,9 @@ from __future__ import annotations
 
 from typing import Literal
 
+from confusable import _bidi
+from confusable._data import bidi as _bidi_data
+
 
 class NotImplementedYetError(NotImplementedError):
     """The library does not implement this operation yet."""
@@ -34,6 +37,33 @@ def internal_skeleton(text: str) -> str:
 def bidi_skeleton(text: str, direction: Literal["LTR", "RTL"]) -> str:
     """UTS #39 bidiSkeleton(direction, X)."""
     raise NotImplementedYetError("bidi_skeleton")
+
+
+def bidi_paragraph(
+    text: str, direction: Literal["LTR", "RTL", "auto"]
+) -> tuple[int, tuple[int | None, ...], tuple[int, ...]]:
+    """UAX #9 through rule L2, as BidiCharacterTest.txt states the results.
+
+    Returns the paragraph level, the resolved level of each character (None
+    for those rule X9 removes), and the visual order of the others.
+    """
+    code_points = [ord(c) for c in text]
+    types = [_bidi.bidi_class(cp) for cp in code_points]
+    level, levels, order = _bidi.levels_and_order(types, direction, code_points)
+    return level, tuple(levels), tuple(order)
+
+
+def bidi_classes(
+    classes: tuple[str, ...], direction: Literal["LTR", "RTL", "auto"]
+) -> tuple[tuple[int | None, ...], tuple[int, ...]]:
+    """UAX #9 through rule L2 on Bidi_Class values, as in BidiTest.txt."""
+    _, levels, order = _bidi.levels_and_order(classes, direction)
+    return tuple(levels), tuple(order)
+
+
+def bidi_display(text: str, direction: Literal["LTR", "RTL"]) -> str:
+    """R″ of UTS #39 bidiSkeleton: display order with UAX #9 L3 and L4."""
+    return _bidi.display(text, direction)
 
 
 def nfd(text: str) -> str:
@@ -104,4 +134,15 @@ def property_value(name: str, cp: int) -> str:
     "N" for binary properties, sorted type names for Identifier_Type, hex for
     Bidi_Mirroring_Glyph and Bidi_Paired_Bracket ("" where there is none).
     """
-    raise NotImplementedYetError("property_value")
+    if name == "Bidi_Class":
+        return _bidi.bidi_class(cp)
+    if name == "Bidi_Mirroring_Glyph":
+        glyph = _bidi_data.BIDI_MIRRORING_GLYPH.get(cp)
+        return "" if glyph is None else f"{glyph:04X}"
+    if name == "Bidi_Paired_Bracket":
+        bracket = _bidi_data.BIDI_BRACKETS.get(cp)
+        return "" if bracket is None else f"{bracket[0]:04X}"
+    if name == "Bidi_Paired_Bracket_Type":
+        bracket = _bidi_data.BIDI_BRACKETS.get(cp)
+        return {"o": "Open", "c": "Close"}[bracket[1]] if bracket else "None"
+    raise NotImplementedYetError(f"property_value({name})")

@@ -6,10 +6,12 @@ fields separated by tabs, and "#" header lines that describe each file.
 
 from __future__ import annotations
 
+import gzip
 from collections.abc import Iterator
 from dataclasses import dataclass
 from functools import cache
 from pathlib import Path
+from typing import Literal
 
 FIXTURES = Path(__file__).parent / "fixtures"
 UNICODE_VERSION = "18.0.0"
@@ -108,13 +110,19 @@ class StringCase:
     failed_checks: frozenset[str]
     decimal_zeros: frozenset[str]
     grapheme_boundaries: tuple[int, ...]
+    # R″ of bidiSkeleton: display order with UAX #9 L3 and L4 applied.
+    display_ltr: str
+    display_rtl: str
 
 
 @cache
 def strings() -> tuple[StringCase, ...]:
     cases = []
     for row in rows("strings.txt"):
-        source, ltr, internal, rtl, normalized, rss, level, checks, zeros, bounds = row
+        source, ltr, internal, rtl, normalized, rss, level, checks, zeros, bounds = row[
+            :10
+        ]
+        display_ltr, display_rtl = row[10:]
         cases.append(
             StringCase(
                 text=text(source),
@@ -127,6 +135,8 @@ def strings() -> tuple[StringCase, ...]:
                 failed_checks=frozenset(checks.split()),
                 decimal_zeros=frozenset(text(zeros)),
                 grapheme_boundaries=tuple(int(b) for b in bounds.split()),
+                display_ltr=text(source if display_ltr == "=" else display_ltr),
+                display_rtl=text(source if display_rtl == "=" else display_rtl),
             )
         )
     return tuple(cases)
@@ -187,4 +197,90 @@ def grapheme_break_tests() -> tuple[GraphemeCase, ...]:
                 elif token != "×":
                     chars.append(chr(int(token, 16)))
             cases.append(GraphemeCase(number, "".join(chars), tuple(boundaries)))
+    return tuple(cases)
+
+
+BidiDirection = Literal["LTR", "RTL", "auto"]
+BIDI_DIRECTIONS: dict[str, BidiDirection] = {"0": "LTR", "1": "RTL", "2": "auto"}
+
+
+@dataclass(frozen=True)
+class BidiCase:
+    """One expected result from Unicode's bidi conformance tests.
+
+    Levels are None for the characters rule X9 removes; order lists the
+    others by index, left to right.
+    """
+
+    line: int
+    direction: BidiDirection
+    levels: tuple[int | None, ...]
+    order: tuple[int, ...]
+    # BidiCharacterTest.txt only: the text and the paragraph level.
+    text: str = ""
+    paragraph_level: int = 0
+    # BidiTest.txt only: Bidi_Class values instead of text.
+    classes: tuple[str, ...] = ()
+
+
+def _gzip_lines(name: str) -> Iterator[tuple[int, str]]:
+    with gzip.open(FIXTURES / name, "rt", encoding="utf-8") as lines:
+        for number, line in enumerate(lines, 1):
+            yield number, line.rstrip("\n")
+
+
+def _levels(field: str) -> tuple[int | None, ...]:
+    return tuple(None if x == "x" else int(x) for x in field.split())
+
+
+@cache
+def bidi_character_tests() -> tuple[BidiCase, ...]:
+    cases = []
+    for number, line in _gzip_lines("BidiCharacterTest.txt.gz"):
+        if not line or line.startswith("#"):
+            continue
+        source, direction, paragraph, levels, order = line.split(";")
+        cases.append(
+            BidiCase(
+                line=number,
+                direction=BIDI_DIRECTIONS[direction],
+                levels=_levels(levels),
+                order=tuple(int(x) for x in order.split()),
+                text=text(source),
+                paragraph_level=int(paragraph),
+            )
+        )
+    return tuple(cases)
+
+
+@cache
+def bidi_tests() -> tuple[BidiCase, ...]:
+    """BidiTest.txt, one case per data line and paragraph direction."""
+    cases = []
+    levels: tuple[int | None, ...] = ()
+    order: tuple[int, ...] = ()
+    for number, line in _gzip_lines("BidiTest.txt.gz"):
+        data = line.split("#", 1)[0].strip()
+        if data.startswith("@Levels:"):
+            levels = _levels(data.removeprefix("@Levels:"))
+        elif data.startswith("@Reorder:"):
+            order = tuple(int(x) for x in data.removeprefix("@Reorder:").split())
+        elif data and not data.startswith("@"):
+            classes, bitset = data.split(";")
+            directions: tuple[tuple[int, BidiDirection], ...] = (
+                (1, "auto"),
+                (2, "LTR"),
+                (4, "RTL"),
+            )
+            for bit, direction in directions:
+                if int(bitset, 16) & bit:
+                    cases.append(
+                        BidiCase(
+                            number,
+                            direction,
+                            levels,
+                            order,
+                            classes=tuple(classes.split()),
+                        )
+                    )
     return tuple(cases)

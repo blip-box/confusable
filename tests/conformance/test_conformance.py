@@ -212,11 +212,82 @@ def test_grapheme_boundaries_of_corpus_strings() -> None:
     )
 
 
+# The Unicode Bidirectional Algorithm, which bidiSkeleton applies.
+
+
+def test_unicode_bidi_character_tests() -> None:
+    assert_all(
+        f"BidiCharacterTest.txt line {case.line}: got {got}"
+        for case in oracle_data.bidi_character_tests()
+        if (got := adapter.bidi_paragraph(case.text, case.direction))
+        != (case.paragraph_level, case.levels, case.order)
+    )
+
+
+def test_unicode_bidi_tests() -> None:
+    assert_all(
+        f"BidiTest.txt line {case.line} ({case.direction}): got {got}"
+        for case in oracle_data.bidi_tests()
+        if (got := adapter.bidi_classes(case.classes, case.direction))
+        != (case.levels, case.order)
+    )
+
+
+def test_bidi_display_of_corpus_strings() -> None:
+    assert_all(
+        f"{show(case.text)} {direction}: expected {show(want)}, got {show(got)}"
+        for case in oracle_data.strings()
+        for direction, want in zip(
+            DIRECTIONS, (case.display_ltr, case.display_rtl), strict=True
+        )
+        if (got := adapter.bidi_display(case.text, direction)) != want
+    )
+
+
+# Only R, AL, AN, RLE, RLO and RLI can put text at an odd level in a
+# left-to-right paragraph, so without them display order is the identity.
+# UTS #39 section 4 states this fast path with only R and AL, which is wrong:
+# RLO reverses the Latin in "invoice\u202egpj.exe", and a neutral between two
+# Arabic-Indic digits (AN) resolves to R and is mirrored.
+_ODD_LEVEL_CLASSES = {"R", "AL", "AN", "RLE", "RLO", "RLI"}
+_bidi_class = oracle_data.properties()["Bidi_Class"]
+
+
+@given(
+    st.text(
+        st.characters().filter(lambda c: _bidi_class(ord(c)) not in _ODD_LEVEL_CLASSES)
+    )
+)
+def test_left_to_right_display_without_odd_level_classes_is_identity(text: str) -> None:
+    assert adapter.bidi_display(text, "LTR") == text
+
+
+def test_uts39_fast_path_needs_more_than_r_and_al() -> None:
+    for text in ("invoice\u202egpj.exe", "\u0661(\u0662", "\u202ba!\u202c"):
+        assert not {_bidi_class(ord(c)) for c in text} & {"R", "AL"}
+        assert adapter.bidi_display(text, "LTR") != text
+
+
 # Character properties, for the generated data tables.
 
+# Properties the generated tables provide so far; the others are strict xfails.
+IMPLEMENTED_PROPERTIES = {
+    "Bidi_Class",
+    "Bidi_Mirroring_Glyph",
+    "Bidi_Paired_Bracket",
+    "Bidi_Paired_Bracket_Type",
+}
 
-@not_implemented("property_value")
-@pytest.mark.parametrize("name", sorted(oracle_data.properties()))
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        name
+        if name in IMPLEMENTED_PROPERTIES
+        else pytest.param(name, marks=not_implemented(f"property_value({name})"))
+        for name in sorted(oracle_data.properties())
+    ],
+)
 def test_property_of_every_code_point(name: str) -> None:
     expected = oracle_data.properties()[name]
     assert_all(

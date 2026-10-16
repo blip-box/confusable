@@ -1,0 +1,52 @@
+UAX #9 reorders text only within a paragraph, but uspoof_getBidiSkeleton
+reorders text with several paragraphs as a single line, so in a right-to-left
+context later paragraphs move in front of earlier ones. This patch reorders each
+paragraph as its own line and keeps the paragraphs in logical order. It applies
+on top of 0002. Drop it once ICU fixes this upstream.
+
+--- a/source/i18n/uspoof.cpp
++++ b/source/i18n/uspoof.cpp
+@@ -742,18 +742,33 @@
+         ubidi_close(bidi);
+         return dest;
+     }
++    // UAX #9 reorders text only within a paragraph: reorder each paragraph as
++    // its own line, and keep the paragraphs in logical order.
+     UnicodeString reordered;
+-    // Mirroring can lengthen the text: U+221D mirrors to U+1DB10 in Unicode 18.
+-    int32_t const capacity = 2 * ubidi_getProcessedLength(bidi);
+-    UChar* const reorderedBuffer = reordered.getBuffer(capacity);
+-    if (reorderedBuffer == nullptr) {
+-        *status = U_MEMORY_ALLOCATION_ERROR;
+-        ubidi_close(bidi);
+-        return dest;
++    UBiDi *line = ubidi_open();
++    int32_t const paragraphs = id.isEmpty() ? 0 : ubidi_countParagraphs(bidi);
++    for (int32_t p = 0; p < paragraphs && U_SUCCESS(*status); ++p) {
++        int32_t start = 0;
++        int32_t limit = 0;
++        ubidi_getParagraphByIndex(bidi, p, &start, &limit, nullptr, status);
++        ubidi_setLine(bidi, start, limit, line, status);
++        if (U_FAILURE(*status)) {
++            break;
++        }
++        // Mirroring can lengthen the text: U+221D mirrors to U+1DB10 in Unicode 18.
++        int32_t const capacity = 2 * (limit - start);
++        UnicodeString part;
++        UChar* const buffer = part.getBuffer(capacity);
++        if (buffer == nullptr) {
++            *status = U_MEMORY_ALLOCATION_ERROR;
++            break;
++        }
++        int32_t const length = ubidi_writeReordered(line, buffer, capacity,
++                             UBIDI_KEEP_BASE_COMBINING | UBIDI_DO_MIRRORING, status);
++        part.releaseBuffer(U_SUCCESS(*status) ? length : 0);
++        reordered.append(part);
+     }
+-    int32_t const length = ubidi_writeReordered(bidi, reorderedBuffer, capacity,
+-                         UBIDI_KEEP_BASE_COMBINING | UBIDI_DO_MIRRORING, status);
+-    reordered.releaseBuffer(U_SUCCESS(*status) ? length : 0);
++    ubidi_close(line);
+     ubidi_close(bidi);
+ 
+     if (U_FAILURE(*status)) {
