@@ -14,6 +14,8 @@ from dataclasses import dataclass
 from pathlib import Path
 
 UNICODE_VERSION = "18.0.0"
+# Emoji files name the version without its last part: 18.0.
+EMOJI_VERSION = UNICODE_VERSION.rsplit(".", 1)[0]
 BASE_URL = f"https://www.unicode.org/Public/{UNICODE_VERSION}/"
 CACHE_DIR = (
     Path(os.environ.get("CONFUSABLE_UNICODE_CACHE", Path(__file__).parent / ".cache"))
@@ -136,16 +138,15 @@ SOURCES: dict[str, Source] = {
             "ucd/emoji/emoji-data.txt",
             "80d00f8e616a0ef27fd6b8de3b758c06383b5d917e2977709578e68baf733bf1",
         ),
-        # Emoji sequences carry a two-part version.
         _versioned(
             "emoji/emoji-sequences.txt",
             "1823dce71f3dd9cb0ad1976797baee4ffbdc1909756f43af8ce4c57f732843a4",
-            "18.0",
+            EMOJI_VERSION,
         ),
         _versioned(
             "emoji/emoji-zwj-sequences.txt",
             "f61b5213bdf85a57741a9f903cb38d0f39a3d13be6ff4aca3b39857e859a9191",
-            "18.0",
+            EMOJI_VERSION,
         ),
     )
 }

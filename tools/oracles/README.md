@@ -51,8 +51,8 @@ rule tied to a point of the spec, or generation fails; `agreement.txt` in the
 fixtures records the counts.
 
 Besides the oracles, the fixtures carry Unicode's own conformance tests:
-`GraphemeBreakTest.txt`, and `BidiTest.txt` and `BidiCharacterTest.txt`,
-gzipped because they are large. The bidi tests stop at rule L2, so the
+`GraphemeBreakTest.txt`, and `BidiTest.txt`, `BidiCharacterTest.txt` and
+`NormalizationTest.txt`, gzipped because they are large. The bidi tests stop at rule L2, so the
 bidiSkeleton display order (L3, L4, and where X9-removed characters go) is
 checked against ICU instead, in columns 11 and 12 of `strings.txt`.
 

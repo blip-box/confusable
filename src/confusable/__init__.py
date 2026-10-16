@@ -1,7 +1,12 @@
 """Unicode spoofing and confusable detection (UTS #39) in pure Python."""
 
-from importlib.metadata import version as _version
+from confusable import _data
 
-__version__ = _version("confusable")
+# Kept in step with pyproject.toml by tests/test_package.py. A literal, because
+# importlib.metadata alone would add about 100 ms to importing the package.
+__version__ = "0.1.0.dev0"
 
-__all__ = ["__version__"]
+# The Unicode version of every table and algorithm in the package.
+unicode_version = _data.UNICODE_VERSION
+
+__all__ = ["__version__", "unicode_version"]

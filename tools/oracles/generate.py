@@ -144,6 +144,7 @@ def main() -> None:
         ("GraphemeBreakTest.txt", "ucd/auxiliary/GraphemeBreakTest.txt"),
         ("BidiCharacterTest.txt.gz", "ucd/BidiCharacterTest.txt"),
         ("BidiTest.txt.gz", "ucd/BidiTest.txt"),
+        ("NormalizationTest.txt.gz", "ucd/NormalizationTest.txt"),
     ):
         files[name] = sources[path].read_text(encoding="utf-8")
 

@@ -16,8 +16,14 @@ from __future__ import annotations
 
 from typing import Literal
 
-from confusable import _bidi
+from confusable import _bidi, _normalize
 from confusable._data import bidi as _bidi_data
+from confusable._data import graphemes as _graphemes
+from confusable._data import identifiers as _identifiers
+from confusable._data import normalization as _normalization
+from confusable._data import properties as _properties
+from confusable._data import scripts as _scripts
+from confusable._lookup import Ranges, Runs
 
 
 class NotImplementedYetError(NotImplementedError):
@@ -68,7 +74,7 @@ def bidi_display(text: str, direction: Literal["LTR", "RTL"]) -> str:
 
 def nfd(text: str) -> str:
     """NFD at the pinned Unicode version, independent of Python's own."""
-    raise NotImplementedYetError("nfd")
+    return _normalize.nfd(text)
 
 
 def resolved_script_set(text: str) -> str:
@@ -126,6 +132,26 @@ def grapheme_boundaries(text: str) -> tuple[int, ...]:
     raise NotImplementedYetError("grapheme_boundaries")
 
 
+_SCRIPT = Runs(_scripts.SCRIPT_RUNS)
+_SCRIPT_EXTENSIONS = Runs(_scripts.SCRIPT_EXTENSIONS_RUNS)
+_ENUMERATED = {
+    "Script": _SCRIPT,
+    "General_Category": Runs(_properties.GENERAL_CATEGORY_RUNS),
+    "Grapheme_Cluster_Break": Runs(_graphemes.GRAPHEME_CLUSTER_BREAK_RUNS),
+    "Indic_Conjunct_Break": Runs(_graphemes.INDIC_CONJUNCT_BREAK_RUNS),
+}
+_BINARY = {
+    "XID_Start": Ranges(_identifiers.XID_START_RANGES),
+    "XID_Continue": Ranges(_identifiers.XID_CONTINUE_RANGES),
+    "Default_Ignorable_Code_Point": Ranges(_properties.DEFAULT_IGNORABLE_RANGES),
+    "Bidi_Control": Ranges(_properties.BIDI_CONTROL_RANGES),
+    "Join_Control": Ranges(_properties.JOIN_CONTROL_RANGES),
+    "Extended_Pictographic": Ranges(_graphemes.EXTENDED_PICTOGRAPHIC_RANGES),
+}
+_ALLOWED = Ranges(_identifiers.IDENTIFIER_ALLOWED_RANGES)
+_IDENTIFIER_TYPE = Runs(_identifiers.IDENTIFIER_TYPE_RUNS)
+
+
 def property_value(name: str, cp: int) -> str:
     """A character property as properties.txt writes it.
 
@@ -134,6 +160,19 @@ def property_value(name: str, cp: int) -> str:
     "N" for binary properties, sorted type names for Identifier_Type, hex for
     Bidi_Mirroring_Glyph and Bidi_Paired_Bracket ("" where there is none).
     """
+    if name in _ENUMERATED:
+        return _ENUMERATED[name][cp]
+    if name in _BINARY:
+        return "Y" if cp in _BINARY[name] else "N"
+    if name == "Script_Extensions":
+        extensions = _SCRIPT_EXTENSIONS[cp]
+        return "" if extensions in ("", _SCRIPT[cp]) else extensions
+    if name == "Canonical_Combining_Class":
+        return str(_normalization.CANONICAL_COMBINING_CLASS.get(cp, 0))
+    if name == "Identifier_Status":
+        return "Allowed" if cp in _ALLOWED else "Restricted"
+    if name == "Identifier_Type":
+        return " ".join(sorted(_IDENTIFIER_TYPE[cp].split()))
     if name == "Bidi_Class":
         return _bidi.bidi_class(cp)
     if name == "Bidi_Mirroring_Glyph":

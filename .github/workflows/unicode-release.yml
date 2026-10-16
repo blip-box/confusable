@@ -1,0 +1,58 @@
+# Weekly: when Unicode publishes a new version, open an issue that tracks the
+# move to it. A failed run opens (or comments on) an issue too, and CI fails
+# while this workflow is disabled, so it cannot stop working unnoticed.
+name: Unicode release
+
+on:
+  schedule:
+    - cron: "17 6 * * 1" # Mondays, 06:17 UTC
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  check:
+    name: check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write # open the new-release issue or report a failure
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - id: release
+        run: uv run --no-project --python 3.14 python -m tools.unicode_release check
+      - name: Open an issue for the new release
+        if: steps.release.outputs.newer == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          LATEST: ${{ steps.release.outputs.latest }}
+        run: |
+          title="Move to Unicode $LATEST"
+          existing=$(gh issue list --state all --search "\"$title\" in:title" --json title --jq "map(select(.title == \"$title\")) | length")
+          if [ "$existing" = "0" ]; then
+            uv run --no-project --python 3.14 python -m tools.unicode_release issue "$LATEST" > body.md
+            gh issue create --title "$title" --body-file body.md
+          fi
+      - name: Report the failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          title="The Unicode release check is failing"
+          number=$(gh issue list --state open --search "\"$title\" in:title" --json number,title --jq "map(select(.title == \"$title\")) | .[0].number // empty")
+          if [ -n "$number" ]; then
+            gh issue comment "$number" --body "It failed again: $RUN_URL"
+          else
+            printf 'The weekly check for new Unicode releases failed: %s\n\nUntil it is fixed, a new Unicode release goes unnoticed.\n' "$RUN_URL" > body.md
+            gh issue create --title "$title" --body-file body.md
+          fi
