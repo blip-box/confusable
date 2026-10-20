@@ -68,7 +68,6 @@ def test_rtl_bidi_skeleton_of_every_code_point() -> None:
     )
 
 
-@not_implemented("nfd")
 def test_nfd_of_every_code_point() -> None:
     expected = oracle_data.nfd()
     assert_all(
@@ -108,12 +107,22 @@ def test_bidi_skeletons_of_corpus_strings() -> None:
     )
 
 
-@not_implemented("nfd")
 def test_nfd_of_corpus_strings() -> None:
     assert_all(
         f"{show(case.text)}: expected {show(case.nfd)}, got {show(got)}"
         for case in oracle_data.strings()
         if (got := adapter.nfd(case.text)) != case.nfd
+    )
+
+
+def test_unicode_normalization_tests() -> None:
+    # NormalizationTest.txt: c3 == NFD(c1) == NFD(c2) == NFD(c3), and
+    # c5 == NFD(c4) == NFD(c5).
+    assert_all(
+        f"NormalizationTest.txt line {case.line}"
+        for case in oracle_data.normalization_tests()
+        if {adapter.nfd(c) for c in case.columns[:3]} != {case.columns[2]}
+        or {adapter.nfd(c) for c in case.columns[3:]} != {case.columns[4]}
     )
 
 
@@ -270,24 +279,8 @@ def test_uts39_fast_path_needs_more_than_r_and_al() -> None:
 
 # Character properties, for the generated data tables.
 
-# Properties the generated tables provide so far; the others are strict xfails.
-IMPLEMENTED_PROPERTIES = {
-    "Bidi_Class",
-    "Bidi_Mirroring_Glyph",
-    "Bidi_Paired_Bracket",
-    "Bidi_Paired_Bracket_Type",
-}
 
-
-@pytest.mark.parametrize(
-    "name",
-    [
-        name
-        if name in IMPLEMENTED_PROPERTIES
-        else pytest.param(name, marks=not_implemented(f"property_value({name})"))
-        for name in sorted(oracle_data.properties())
-    ],
-)
+@pytest.mark.parametrize("name", sorted(oracle_data.properties()))
 def test_property_of_every_code_point(name: str) -> None:
     expected = oracle_data.properties()[name]
     assert_all(

@@ -284,3 +284,22 @@ def bidi_tests() -> tuple[BidiCase, ...]:
                         )
                     )
     return tuple(cases)
+
+
+@dataclass(frozen=True)
+class NormalizationCase:
+    """One line of Unicode's NormalizationTest.txt: columns c1 to c5."""
+
+    line: int
+    columns: tuple[str, str, str, str, str]
+
+
+@cache
+def normalization_tests() -> tuple[NormalizationCase, ...]:
+    cases = []
+    for number, line in _gzip_lines("NormalizationTest.txt.gz"):
+        if not line or line.startswith(("#", "@")):
+            continue
+        c1, c2, c3, c4, c5 = (text(field) for field in line.split(";")[:5])
+        cases.append(NormalizationCase(number, (c1, c2, c3, c4, c5)))
+    return tuple(cases)

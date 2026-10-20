@@ -4,8 +4,9 @@ Unicode spoofing and confusable detection for Python, following
 [Unicode Technical Standard #39](https://www.unicode.org/reports/tr39/). Pure Python,
 no runtime dependencies.
 
-> **Status: pre-alpha.** This repository contains the project scaffold and the
-> conformance test harness. Nothing is on PyPI yet, and the features below are
+> **Status: pre-alpha.** The conformance test harness, the Unicode data tables and
+> two building blocks (NFD and the Unicode Bidirectional Algorithm) are done; the
+> detection API is not written yet. Nothing is on PyPI, and the features below are
 > planned, not implemented.
 
 ## What it is for
