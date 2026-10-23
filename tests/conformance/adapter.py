@@ -147,8 +147,11 @@ def decimal_zeros(text: str) -> frozenset[str]:
 
 
 def grapheme_boundaries(text: str) -> tuple[int, ...]:
-    """UAX #29 extended grapheme cluster boundaries, as code point offsets."""
-    raise NotImplementedYetError("grapheme_boundaries")
+    """UAX #29 extended grapheme cluster boundaries, as code point offsets.
+
+    As ICU reports them: the start of the text, then the end of each cluster.
+    """
+    return (0, *(segment.end for segment in confusable.iter_graphemes(text)))
 
 
 _SCRIPT = Runs(_scripts_data.SCRIPT_RUNS)

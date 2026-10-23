@@ -1,6 +1,7 @@
 """Unicode spoofing and confusable detection (UTS #39) in pure Python."""
 
 from confusable import _data
+from confusable._graphemes import Segment, iter_graphemes, truncate
 from confusable._identifiers import (
     IdentifierStatus,
     IdentifierType,
@@ -29,6 +30,7 @@ __all__ = [
     "Invisible",
     "Match",
     "RestrictionLevel",
+    "Segment",
     "__version__",
     "find_invisible",
     "has_hidden_overlay",
@@ -41,8 +43,10 @@ __all__ = [
     "is_mixed_script",
     "isxidcontinue",
     "isxidstart",
+    "iter_graphemes",
     "match",
     "restriction_level",
     "skeleton",
+    "truncate",
     "unicode_version",
 ]

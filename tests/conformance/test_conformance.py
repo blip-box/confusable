@@ -202,7 +202,6 @@ def test_decimal_zeros() -> None:
 # Grapheme clusters.
 
 
-@not_implemented("grapheme_boundaries")
 def test_unicode_grapheme_break_tests() -> None:
     assert_all(
         f"GraphemeBreakTest.txt line {case.line}: expected {case.boundaries}, got {got}"
@@ -211,7 +210,6 @@ def test_unicode_grapheme_break_tests() -> None:
     )
 
 
-@not_implemented("grapheme_boundaries")
 def test_grapheme_boundaries_of_corpus_strings() -> None:
     assert_all(
         f"{show(case.text)}: expected {case.grapheme_boundaries}, got {got}"

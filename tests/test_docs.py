@@ -3,6 +3,7 @@ import doctest
 import pytest
 
 from confusable import (
+    _graphemes,
     _identifiers,
     _invisible,
     _marks,
@@ -13,7 +14,8 @@ from confusable import (
 
 
 @pytest.mark.parametrize(
-    "module", [_identifiers, _invisible, _marks, _numbers, _restriction, _skeleton]
+    "module",
+    [_graphemes, _identifiers, _invisible, _marks, _numbers, _restriction, _skeleton],
 )
 def test_docstring_examples(module: object) -> None:
     results = doctest.testmod(module, optionflags=doctest.ELLIPSIS)  # type: ignore[arg-type]
