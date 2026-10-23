@@ -2,30 +2,58 @@
 
 Both checks look at the text in NFD, so that canonically equivalent strings,
 which are the same text written two ways, get the same answer.
+
+The tables load on first use, so that importing the package stays fast.
 """
 
 from __future__ import annotations
 
 from collections.abc import Iterator
+from functools import cache
 
-from confusable._data import confusables as _confusables
-from confusable._data import normalization as _normalization
-from confusable._data import properties as _properties
 from confusable._lookup import Runs
-from confusable._normalize import nfd
-
-_CATEGORY = Runs(_properties.GENERAL_CATEGORY_RUNS)
-_COMBINING_CLASS = _normalization.CANONICAL_COMBINING_CLASS
+from confusable._normalize import combining_classes, nfd
 
 # UTS #39 section 5.4: "Forbid sequences of more than 4 nonspacing marks".
 MAX_NONSPACING_MARKS = 4
 
 
+@cache
+def _categories() -> Runs:
+    from confusable._data.properties import GENERAL_CATEGORY_RUNS
+
+    return Runs(GENERAL_CATEGORY_RUNS)
+
+
+@cache
+def _prototypes() -> dict[int, str]:
+    from confusable._data.confusables import PROTOTYPES
+
+    return PROTOTYPES
+
+
+@cache
+def _dotted_looking() -> frozenset[int]:
+    """Return the characters that lose their dot under an accent above.
+
+    ICU's isIllegalCombiningDotLeadCharacterNoLookup: i, j, l, dotless i and
+    j, and the Soft_Dotted characters.
+    """
+    from confusable._data.properties import SOFT_DOTTED_RANGES
+
+    return frozenset(
+        {ord("i"), ord("j"), ord("l"), 0x0131, 0x0237}.union(
+            *(range(first, last + 1) for first, last in SOFT_DOTTED_RANGES)
+        )
+    )
+
+
 def _nonspacing_runs(decomposed: str) -> Iterator[list[str]]:
     """Yield each maximal run of nonspacing marks, gc=Mn or gc=Me."""
+    categories = _categories()
     run: list[str] = []
     for c in decomposed:
-        if _CATEGORY[ord(c)] in ("Mn", "Me"):
+        if categories[ord(c)] in ("Mn", "Me"):
             run.append(c)
         elif run:
             yield run
@@ -70,25 +98,17 @@ def has_unlikely_marks(text: str) -> bool:
 
 
 _DOT_ABOVE = 0x0307
-_ABOVE = _COMBINING_CLASS[_DOT_ABOVE]  # 230
-
-# ICU's isIllegalCombiningDotLeadCharacterNoLookup: i, j, l, dotless i and j,
-# and the Soft_Dotted characters, which lose their dot under an accent above.
-_DOTTED_LOOKING = frozenset(
-    {ord("i"), ord("j"), ord("l"), 0x0131, 0x0237}.union(
-        *(range(first, last + 1) for first, last in _properties.SOFT_DOTTED_RANGES)
-    )
-)
 
 
 def _hides_dot_above(cp: int) -> bool:
     """ICU's isIllegalCombiningDotLeadCharacter."""
-    if cp in _DOTTED_LOOKING:
+    dotted_looking = _dotted_looking()
+    if cp in dotted_looking:
         return True
     # Also the characters whose prototype ends in one of them, such as
     # LATIN CAPITAL LETTER I, whose prototype is l.
-    prototype = _confusables.PROTOTYPES.get(cp)
-    return prototype is not None and ord(prototype[-1]) in _DOTTED_LOOKING
+    prototype = _prototypes().get(cp)
+    return prototype is not None and ord(prototype[-1]) in dotted_looking
 
 
 def has_hidden_overlay(text: str) -> bool:
@@ -114,11 +134,13 @@ def has_hidden_overlay(text: str) -> bool:
     decomposed = nfd(text)
     if chr(_DOT_ABOVE) not in decomposed:
         return False
+    classes = combining_classes()
+    above = classes[_DOT_ABOVE]  # 230
     after_dotted = False
     for c in decomposed:
         cp = ord(c)
         if after_dotted and cp == _DOT_ABOVE:
             return True
-        if _COMBINING_CLASS.get(cp, 0) in (0, _ABOVE):
+        if classes.get(cp, 0) in (0, above):
             after_dotted = _hides_dot_above(cp)
     return False
