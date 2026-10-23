@@ -37,6 +37,7 @@ strict xfails.
 | Python | `>=3.10`. CI tests 3.10 to 3.15 on Linux and 3.15 on macOS and Windows. |
 | License | MIT for the code. Unicode data files are under the Unicode License v3; ship that notice next to the generated data. |
 | Unicode data | Generated Python tables are committed, so installs need no network. |
+| Import time | `import confusable` loads no generated table: each module loads the tables it needs on first use, through `functools.cache` functions that import from `confusable._data` (see `_identifiers.py`). Without cached bytecode (`PYTHONDONTWRITEBYTECODE=1`, read-only installs) the tables take about 100 ms to import. No dataclasses or `NamedTuple` either: they import `inspect` and `ast`, or `annotationlib` on Python 3.14, which costs milliseconds. `tests/test_package.py` checks both in a fresh interpreter. |
 | Unicode version | 18.0.0, pinned in `tools/unicode_sources.py`; the table generator copies it into `confusable._data`, and the package exposes it as `confusable.unicode_version`. |
 | New Unicode versions | A weekly workflow opens an issue with the checklist, rather than a PR: the move needs a person to read the new spec revisions and an ICU release for the oracles, which usually ships weeks after Unicode. `python -m tools.unicode_release prepare VERSION` does the mechanical part. |
 | Specification | UTS #39 revision 34. Its `skeleton(X)` is `bidiSkeleton(LTR, X)`, which applies the Unicode Bidirectional Algorithm (UAX #9 revision 52) before the confusable mapping. v1 implements the full algorithm. |

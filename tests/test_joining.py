@@ -5,8 +5,10 @@ from hypothesis import given
 from hypothesis import strategies as st
 
 from confusable import is_allowed, restriction_level
+from confusable._data.joining import JOINING_TYPE_RUNS
 from confusable._data.normalization import CANONICAL_COMBINING_CLASS
-from confusable._joining import _JOINING_TYPE, joining_controls_in_context
+from confusable._joining import joining_controls_in_context
+from confusable._lookup import Runs
 from confusable._normalize import nfc, nfd
 
 ZWNJ = "\u200c"
@@ -98,6 +100,9 @@ def test_contexts_ignore_normalization(text: str) -> None:
     assert is_allowed(nfc(text), joining_controls=True) == allowed
 
 
+JOINING_TYPE = Runs(JOINING_TYPE_RUNS)
+
+
 def _contextj(text: str, i: int) -> bool:
     """IDNA2008's CONTEXTJ rule (RFC 5892 appendix A) for the joiner at i."""
     if i > 0 and CANONICAL_COMBINING_CLASS.get(ord(text[i - 1])) == 9:
@@ -105,15 +110,15 @@ def _contextj(text: str, i: int) -> bool:
     if text[i] == ZWJ:
         return False
     before, after = i - 1, i + 1
-    while before >= 0 and _JOINING_TYPE[ord(text[before])] == "T":
+    while before >= 0 and JOINING_TYPE[ord(text[before])] == "T":
         before -= 1
-    while after < len(text) and _JOINING_TYPE[ord(text[after])] == "T":
+    while after < len(text) and JOINING_TYPE[ord(text[after])] == "T":
         after += 1
     return (
         before >= 0
         and after < len(text)
-        and _JOINING_TYPE[ord(text[before])] in ("L", "D")
-        and _JOINING_TYPE[ord(text[after])] in ("R", "D")
+        and JOINING_TYPE[ord(text[before])] in ("L", "D")
+        and JOINING_TYPE[ord(text[after])] in ("R", "D")
     )
 
 

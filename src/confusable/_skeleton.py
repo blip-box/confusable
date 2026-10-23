@@ -1,31 +1,43 @@
-"""Confusable detection: skeletons and the confusable classes (UTS #39 section 4)."""
+"""Confusable detection: skeletons and the confusable classes (UTS #39 section 4).
+
+The tables load on first use, so that importing the package stays fast.
+"""
 
 from __future__ import annotations
 
 import enum
 import re
+from functools import cache
 from typing import Literal
 
 from confusable import _bidi, _scripts
-from confusable._data import bidi as _bidi_data
-from confusable._data import confusables as _confusables
-from confusable._data import properties as _properties
 from confusable._normalize import nfd
 
 Direction = Literal["ltr", "rtl", "auto"]
 
-# internalSkeleton steps 2 and 3 as one str.translate table: Default_Ignorable
-# code points are removed, and every other character with a prototype becomes
-# its prototype. Step 2 comes first, so the removal wins for the few
-# ignorables that also have a prototype.
-_MAPPING: dict[int, str | None] = dict(_confusables.PROTOTYPES)
-for _first, _last in _properties.DEFAULT_IGNORABLE_RANGES:
-    _MAPPING.update(dict.fromkeys(range(_first, _last + 1)))
+
+@cache
+def _mapping() -> dict[int, str | None]:
+    """Return internalSkeleton steps 2 and 3 as one str.translate table.
+
+    Default_Ignorable code points are removed, and every other character with
+    a prototype becomes its prototype. Step 2 comes first, so the removal wins
+    for the few ignorables that also have a prototype.
+    """
+    from confusable._data.confusables import PROTOTYPES
+    from confusable._data.properties import DEFAULT_IGNORABLE_RANGES
+
+    mapping: dict[int, str | None] = dict(PROTOTYPES)
+    for first, last in DEFAULT_IGNORABLE_RANGES:
+        mapping.update(dict.fromkeys(range(first, last + 1)))
+    return mapping
 
 
 def _character_class(classes: set[str]) -> re.Pattern[str]:
     """Compile a regex matching any code point whose Bidi_Class is in classes."""
-    runs = _bidi_data.BIDI_CLASS_RUNS
+    from confusable._data.bidi import BIDI_CLASS_RUNS
+
+    runs = BIDI_CLASS_RUNS
     parts = []
     for n, (first, value) in enumerate(runs):
         if value in classes:
@@ -34,16 +46,22 @@ def _character_class(classes: set[str]) -> re.Pattern[str]:
     return re.compile(f"[{''.join(parts)}]")
 
 
-# Only these classes can put text at an odd embedding level in a
-# left-to-right paragraph. Without any of them, display order is logical
-# order and nothing is mirrored, so bidiSkeleton(LTR, X) is internalSkeleton(X).
-# UTS #39 states this fast path with only R and AL, which is wrong: see
-# confusable._bidi and test_uts39_fast_path_needs_more_than_r_and_al.
-_ODD_LEVEL = _character_class({"R", "AL", "AN", "RLE", "RLO", "RLI"})
+@cache
+def _odd_level() -> re.Pattern[str]:
+    """Return a regex for the classes that can reach an odd embedding level.
+
+    Only these classes can put text at an odd embedding level in a
+    left-to-right paragraph. Without any of them, display order is logical
+    order and nothing is mirrored, so bidiSkeleton(LTR, X) is
+    internalSkeleton(X). UTS #39 states this fast path with only R and AL,
+    which is wrong: see confusable._bidi and
+    test_uts39_fast_path_needs_more_than_r_and_al.
+    """
+    return _character_class({"R", "AL", "AN", "RLE", "RLO", "RLI"})
 
 
 def _internal_skeleton(text: str) -> str:
-    return nfd(nfd(text).translate(_MAPPING))
+    return nfd(nfd(text).translate(_mapping()))
 
 
 _BIDI_DIRECTION: dict[Direction, _bidi.Direction] = {
@@ -79,7 +97,7 @@ def skeleton(text: str, direction: Direction | None = "ltr") -> str:
         raise ValueError(
             f"direction must be 'ltr', 'rtl', 'auto' or None, not {direction!r}"
         )
-    if direction == "ltr" and (text.isascii() or not _ODD_LEVEL.search(text)):
+    if direction == "ltr" and (text.isascii() or not _odd_level().search(text)):
         return _internal_skeleton(text)
     return _internal_skeleton(_bidi.display(text, _BIDI_DIRECTION[direction]))
 

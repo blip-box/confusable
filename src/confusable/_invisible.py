@@ -6,18 +6,17 @@ visible job: ZWJ and ZWNJ in the contexts of UTS #39 section 3.1.1.1 or ZWJ
 inside an emoji sequence, Tag characters inside an RGI emoji tag sequence (the
 subdivision flags), and a variation selector that completes a variation
 sequence.
+
+The tables load on first use, so that importing the package stays fast.
 """
 
 from __future__ import annotations
 
 import enum
 import re
+from functools import cache
 
 from confusable import _joining
-from confusable._data import emoji as _emoji
-from confusable._data import graphemes as _graphemes
-from confusable._data import properties as _properties
-from confusable._data import variation as _variation
 from confusable._lookup import Ranges, Runs
 from confusable._normalize import nfc
 
@@ -50,20 +49,69 @@ CONTROL_RANGES = ((0x0000, 0x001F), (0x007F, 0x009F))
 _TAGS = range(0xE0000, 0xE0080)  # the Tags block
 _IDEOGRAPHIC_SELECTORS = range(0xE0100, 0xE01F0)  # VARIATION SELECTOR-17 to -256
 
-_BIDI_CONTROL = Ranges(_properties.BIDI_CONTROL_RANGES)
-_VARIATION_SELECTOR = Ranges(_variation.VARIATION_SELECTOR_RANGES)
-_UNIFIED_IDEOGRAPH = Ranges(_variation.UNIFIED_IDEOGRAPH_RANGES)
-_EXTENDED_PICTOGRAPHIC = Ranges(_graphemes.EXTENDED_PICTOGRAPHIC_RANGES)
-_GRAPHEME_BREAK = Runs(_graphemes.GRAPHEME_CLUSTER_BREAK_RUNS)
 
-_CANDIDATES = re.compile(
-    "["
-    + "".join(
-        f"{re.escape(chr(first))}-{re.escape(chr(last))}"
-        for first, last in (*CONTROL_RANGES, *_properties.DEFAULT_IGNORABLE_RANGES)
+@cache
+def _candidates() -> re.Pattern[str]:
+    """Return a regex for the controls and Default_Ignorable code points."""
+    from confusable._data.properties import DEFAULT_IGNORABLE_RANGES
+
+    return re.compile(
+        "["
+        + "".join(
+            f"{re.escape(chr(first))}-{re.escape(chr(last))}"
+            for first, last in (*CONTROL_RANGES, *DEFAULT_IGNORABLE_RANGES)
+        )
+        + "]"
     )
-    + "]"
-)
+
+
+@cache
+def _bidi_controls() -> Ranges:
+    from confusable._data.properties import BIDI_CONTROL_RANGES
+
+    return Ranges(BIDI_CONTROL_RANGES)
+
+
+@cache
+def _variation_selectors() -> Ranges:
+    from confusable._data.variation import VARIATION_SELECTOR_RANGES
+
+    return Ranges(VARIATION_SELECTOR_RANGES)
+
+
+@cache
+def _unified_ideographs() -> Ranges:
+    from confusable._data.variation import UNIFIED_IDEOGRAPH_RANGES
+
+    return Ranges(UNIFIED_IDEOGRAPH_RANGES)
+
+
+@cache
+def _variation_sequences() -> frozenset[tuple[int, int]]:
+    from confusable._data.variation import VARIATION_SEQUENCES
+
+    return VARIATION_SEQUENCES
+
+
+@cache
+def _extended_pictographic() -> Ranges:
+    from confusable._data.graphemes import EXTENDED_PICTOGRAPHIC_RANGES
+
+    return Ranges(EXTENDED_PICTOGRAPHIC_RANGES)
+
+
+@cache
+def _grapheme_breaks() -> Runs:
+    from confusable._data.graphemes import GRAPHEME_CLUSTER_BREAK_RUNS
+
+    return Runs(GRAPHEME_CLUSTER_BREAK_RUNS)
+
+
+@cache
+def _rgi_tag_sequences() -> frozenset[str]:
+    from confusable._data.emoji import RGI_EMOJI_TAG_SEQUENCES
+
+    return RGI_EMOJI_TAG_SEQUENCES
 
 
 def _joins_emoji(text: str, i: int) -> bool:
@@ -74,12 +122,14 @@ def _joins_emoji(text: str, i: int) -> bool:
     Extended_Pictographic character: an emoji ZWJ sequence, which shows as
     one emoji where it is supported and as its parts elsewhere.
     """
-    if i + 1 == len(text) or ord(text[i + 1]) not in _EXTENDED_PICTOGRAPHIC:
+    pictographic = _extended_pictographic()
+    if i + 1 == len(text) or ord(text[i + 1]) not in pictographic:
         return False
+    breaks = _grapheme_breaks()
     before = i - 1
-    while before >= 0 and _GRAPHEME_BREAK[ord(text[before])] == "Extend":
+    while before >= 0 and breaks[ord(text[before])] == "Extend":
         before -= 1
-    return before >= 0 and ord(text[before]) in _EXTENDED_PICTOGRAPHIC
+    return before >= 0 and ord(text[before]) in pictographic
 
 
 def _completes_variation_sequence(text: str, i: int) -> bool:
@@ -93,15 +143,15 @@ def _completes_variation_sequence(text: str, i: int) -> bool:
     if i == 0:
         return False
     base, selector = ord(text[i - 1]), ord(text[i])
-    return (base, selector) in _variation.VARIATION_SEQUENCES or (
-        selector in _IDEOGRAPHIC_SELECTORS and base in _UNIFIED_IDEOGRAPH
+    return (base, selector) in _variation_sequences() or (
+        selector in _IDEOGRAPHIC_SELECTORS and base in _unified_ideographs()
     )
 
 
 def _tag_sequences(text: str) -> set[int]:
     """Return the positions of the Tag characters in RGI emoji tag sequences."""
     tagged: set[int] = set()
-    for sequence in _emoji.RGI_EMOJI_TAG_SEQUENCES:
+    for sequence in _rgi_tag_sequences():
         start = text.find(sequence)
         while start != -1:
             tagged.update(range(start + 1, start + len(sequence)))
@@ -113,7 +163,7 @@ def _kind(text: str, i: int, tagged: set[int]) -> Invisible | None:
     cp = ord(text[i])
     if cp <= 0x9F:  # the only candidates below U+00AD are controls
         return Invisible.CONTROL
-    if cp in _BIDI_CONTROL:
+    if cp in _bidi_controls():
         return Invisible.BIDI_CONTROL
     if text[i] in _joining.JOINERS:
         if _joining.in_context(text, i) or (
@@ -123,7 +173,7 @@ def _kind(text: str, i: int, tagged: set[int]) -> Invisible | None:
         return Invisible.JOIN_CONTROL
     if cp in _TAGS:
         return None if i in tagged else Invisible.TAG
-    if cp in _VARIATION_SELECTOR:
+    if cp in _variation_selectors():
         if _completes_variation_sequence(text, i):
             return None
         return Invisible.VARIATION_SELECTOR
@@ -132,7 +182,7 @@ def _kind(text: str, i: int, tagged: set[int]) -> Invisible | None:
 
 def _needs_context(c: str) -> bool:
     cp = ord(c)
-    return c in _joining.JOINERS or cp in _TAGS or cp in _VARIATION_SELECTOR
+    return c in _joining.JOINERS or cp in _TAGS or cp in _variation_selectors()
 
 
 def find_invisible(text: str) -> list[tuple[int, Invisible]]:
@@ -160,14 +210,15 @@ def find_invisible(text: str) -> list[tuple[int, Invisible]]:
     >>> find_invisible("\u2764\ufe0f \U0001f469\u200d\U0001f4bb")  # emoji
     []
     """
-    found = [match.start() for match in _CANDIDATES.finditer(text)]
+    candidates = _candidates()
+    found = [match.start() for match in candidates.finditer(text)]
     if not found:
         return []
     if any(_needs_context(text[i]) for i in found):
         # Normalization never adds, removes or moves a candidate, so the n-th
         # candidate of the NFC form is the n-th of the text.
         composed = nfc(text)
-        at = [match.start() for match in _CANDIDATES.finditer(composed)]
+        at = [match.start() for match in candidates.finditer(composed)]
     else:
         composed, at = text, found
     tagged = (
