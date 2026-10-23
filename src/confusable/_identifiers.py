@@ -12,6 +12,7 @@ from __future__ import annotations
 import enum
 from collections.abc import Iterator
 
+from confusable import _joining
 from confusable._data import identifiers as _data
 from confusable._data.normalization import (
     CANONICAL_COMBINING_CLASS,
@@ -118,13 +119,19 @@ def _segments(decomposed: str) -> Iterator[str]:
     yield decomposed[start:]
 
 
-def is_allowed(text: str) -> bool:
+def is_allowed(text: str, *, joining_controls: bool = False) -> bool:
     r"""Return whether text is within the General Security Profile.
 
     Canonical equivalence applies (UTS #39 section 3.1): each segment of the
     text passes if all its characters are Allowed in either its decomposed
     (NFD) or its composed (NFC) form. So the answer is the same however the
     text is encoded, and an attacker cannot pick the encoding that passes.
+
+    The profile excludes ZERO WIDTH JOINER and ZERO WIDTH NON-JOINER, which
+    some languages need. With joining_controls=True, they are allowed where
+    UTS #39 section 3.1.1.1 says they make a visible difference, as in
+    Persian, Malayalam and Sinhala words, and nowhere else. UTS #39 calls
+    this a modification of the profile, so say so where you document yours.
 
     >>> is_allowed("paypal")
     True
@@ -133,11 +140,24 @@ def is_allowed(text: str) -> bool:
     >>> # U+0114 is Restricted, but E with a combining breve is Allowed:
     >>> is_allowed("\u0114"), is_allowed("E\u0306")
     (True, True)
+    >>> persian = "\u0646\u0627\u0645\u0647\u200c\u0627\u06cc"  # with a ZWNJ
+    >>> is_allowed(persian), is_allowed(persian, joining_controls=True)
+    (False, True)
     """
     if text.isascii():
         return all(ord(c) in _ALLOWED for c in text)
-    return all(
-        all(ord(c) in _ALLOWED for c in segment)
-        or all(ord(c) in _ALLOWED for c in nfc(segment))
-        for segment in _segments(nfd(text))
+    # Each joining control starts a segment of its own, in text order.
+    in_context = iter(
+        _joining.joining_controls_in_context(text) if joining_controls else ()
     )
+    for segment in _segments(nfd(text)):
+        if joining_controls and segment[0] in (_joining.ZWNJ, _joining.ZWJ):
+            if not next(in_context):
+                return False
+            segment = segment[1:]
+        if not (
+            all(ord(c) in _ALLOWED for c in segment)
+            or all(ord(c) in _ALLOWED for c in nfc(segment))
+        ):
+            return False
+    return True

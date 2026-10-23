@@ -127,6 +127,14 @@ SOURCES: dict[str, Source] = {
             "d9e23222522551348ea1ccfbb4f62efbf98982afb95840f8959c08ed992c5607",
         ),
         _ucd(
+            "extracted/DerivedJoiningType.txt",
+            "e2408ff2c92b175b0f7bf62c989bbb54c7b077528fe31f8d69b96fa09e7d61ed",
+        ),
+        _ucd(
+            "IndicSyllabicCategory.txt",
+            "a2b3aacf6b3e7bad4ca351ef985d9543825e20280ff280c25f646d9bc4ce304c",
+        ),
+        _ucd(
             "auxiliary/GraphemeBreakProperty.txt",
             "0839dcb79e4ac639ecd538b1abf7c9d22e3f9dd265b7e182d33627aa4d75b45a",
         ),
