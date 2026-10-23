@@ -206,9 +206,9 @@ its hash pins it.
 Each item is its own pull request:
 
 1. Core API, one PR per module where sensible, each wiring its operations into
-   `tests/conformance/adapter.py`: invisible characters, joining controls
-   (section 3.1.1.1) and the section 5.3 and 5.4 checks, then graphemes.
-   Skeletons, `match`, mixed scripts, restriction levels and identifiers are done.
+   `tests/conformance/adapter.py`: invisible characters and joining controls
+   (section 3.1.1.1), then graphemes. Skeletons, `match`, mixed scripts,
+   restriction levels, identifiers and the section 5.3 and 5.4 checks are done.
 2. `confusable.compat.homoglyphs`, with differential tests against
    `confusable_homoglyphs` 3.3.1.
 3. First alpha on PyPI via trusted publishing.
