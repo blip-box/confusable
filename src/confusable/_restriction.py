@@ -50,8 +50,8 @@ def is_mixed_script(text: str) -> bool:
 def restriction_level(text: str) -> RestrictionLevel:
     r"""Return the UTS #39 section 5.2 restriction level of text.
 
-    The identifier profile is the General Security Profile: text with any
-    character outside it is UNRESTRICTED.
+    The identifier profile is the General Security Profile, under canonical
+    equivalence (see is_allowed): text outside it is UNRESTRICTED.
 
     >>> restriction_level("paypal")
     <RestrictionLevel.ASCII_ONLY: 1>
@@ -64,7 +64,7 @@ def restriction_level(text: str) -> RestrictionLevel:
     >>> restriction_level("pay pal")  # a space is outside the profile
     <RestrictionLevel.UNRESTRICTED: 6>
     """
-    if not _identifiers.in_profile(text):
+    if not _identifiers.is_allowed(text):
         return RestrictionLevel.UNRESTRICTED
     if text.isascii():
         return RestrictionLevel.ASCII_ONLY

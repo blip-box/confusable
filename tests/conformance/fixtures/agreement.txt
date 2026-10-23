@@ -13,10 +13,10 @@ Script (non-default entries)	172873	172873
 Script_Extensions (non-default entries)	741	741	
 Identifier_Status (non-default entries)	33792	33792	
 Identifier_Type (non-default entries)	172814	172814	
-string NFD	4094	4094	
-string internalSkeleton	4094	3378	rust-keeps-default-ignorables=716
-resolved script set	4094	3440	rust-lacks-hntl=609 rust-unknown-is-empty=45
-restriction level	4094	4083	rust-lacks-hntl=11
+string NFD	4098	4098	
+string internalSkeleton	4098	3382	rust-keeps-default-ignorables=716
+resolved script set	4098	3441	rust-lacks-hntl=612 rust-unknown-is-empty=45
+restriction level	4098	4071	rust-ignores-canonical-equivalence=16 rust-lacks-hntl=11
 #
 # Rules, with up to three examples each:
 # rust-keeps-default-ignorables: UTS #39 internalSkeleton removes Default_Ignorable_Code_Point characters (step 2). unicode-security 0.1.2 predates that step and keeps them, so its skeleton differs wherever one occurs.
@@ -27,6 +27,10 @@ restriction level	4094	4083	rust-lacks-hntl=11
 #   resolved script set: 0061 0064 006D 0131 006E icu=Hntl Latn
 #   resolved script set: FF50 FF41 FF59 FF50 FF41 FF4C icu=Hntl Latn
 #   resolved script set: 01C9 0065 0074 006F icu=Hntl Latn
+# rust-ignores-canonical-equivalence: UTS #39 section 3.1 applies canonical equivalence when testing for Allowed characters, so a string is in the profile if its decomposed or composed form is. unicode-security tests the characters as written, so where the two disagree it puts the string at a different restriction level.
+#   restriction level: 0114 icu=SINGLE_SCRIPT rust=UNRESTRICTED
+#   restriction level: 0627 0653 icu=SINGLE_SCRIPT rust=UNRESTRICTED
+#   restriction level: 0044 032D icu=SINGLE_SCRIPT rust=UNRESTRICTED
 # rust-unknown-is-empty: Unassigned and private-use code points have Script_Extensions {Zzzz} (Unknown), so by UTS #39 section 5.1 a string made only of them has the resolved script set {Zzzz}, as ICU computes. unicode-script represents Unknown as the empty set instead.
 #   resolved script set: E000
 #   resolved script set: 0378

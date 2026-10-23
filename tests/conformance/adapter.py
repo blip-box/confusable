@@ -17,10 +17,9 @@ from __future__ import annotations
 from typing import Literal
 
 import confusable
-from confusable import _bidi, _identifiers, _normalize, _scripts
+from confusable import _bidi, _normalize, _scripts
 from confusable._data import bidi as _bidi_data
 from confusable._data import graphemes as _graphemes
-from confusable._data import identifiers as _identifiers_data
 from confusable._data import normalization as _normalization
 from confusable._data import properties as _properties
 from confusable._data import scripts as _scripts_data
@@ -78,6 +77,11 @@ def nfd(text: str) -> str:
     return _normalize.nfd(text)
 
 
+def nfc(text: str) -> str:
+    """NFC at the pinned Unicode version, independent of Python's own."""
+    return _normalize.nfc(text)
+
+
 def resolved_script_set(text: str) -> str:
     """UTS #39 section 5.1 resolved script set.
 
@@ -123,8 +127,8 @@ _MATCH_DIRECTION: dict[str, Literal["ltr", "rtl"] | None] = {
 
 
 def outside_profile(text: str) -> bool:
-    """True if any character is outside the General Security Profile."""
-    return not _identifiers.in_profile(text)
+    """True if the text is outside the General Security Profile."""
+    return not confusable.is_allowed(text)
 
 
 def repeated_nonspacing_mark(text: str) -> bool:
@@ -156,15 +160,11 @@ _ENUMERATED = {
     "Indic_Conjunct_Break": Runs(_graphemes.INDIC_CONJUNCT_BREAK_RUNS),
 }
 _BINARY = {
-    "XID_Start": Ranges(_identifiers_data.XID_START_RANGES),
-    "XID_Continue": Ranges(_identifiers_data.XID_CONTINUE_RANGES),
     "Default_Ignorable_Code_Point": Ranges(_properties.DEFAULT_IGNORABLE_RANGES),
     "Bidi_Control": Ranges(_properties.BIDI_CONTROL_RANGES),
     "Join_Control": Ranges(_properties.JOIN_CONTROL_RANGES),
     "Extended_Pictographic": Ranges(_graphemes.EXTENDED_PICTOGRAPHIC_RANGES),
 }
-_ALLOWED = Ranges(_identifiers_data.IDENTIFIER_ALLOWED_RANGES)
-_IDENTIFIER_TYPE = Runs(_identifiers_data.IDENTIFIER_TYPE_RUNS)
 
 
 def property_value(name: str, cp: int) -> str:
@@ -175,6 +175,15 @@ def property_value(name: str, cp: int) -> str:
     "N" for binary properties, sorted type names for Identifier_Type, hex for
     Bidi_Mirroring_Glyph and Bidi_Paired_Bracket ("" where there is none).
     """
+    # The public API, for the properties it exposes.
+    if name == "Identifier_Status":
+        return confusable.identifier_status(chr(cp)).value
+    if name == "Identifier_Type":
+        return " ".join(sorted(t.value for t in confusable.identifier_types(chr(cp))))
+    if name == "XID_Start":
+        return "Y" if confusable.isxidstart(chr(cp)) else "N"
+    if name == "XID_Continue":
+        return "Y" if confusable.isxidcontinue(chr(cp)) else "N"
     if name in _ENUMERATED:
         return _ENUMERATED[name][cp]
     if name in _BINARY:
@@ -184,10 +193,6 @@ def property_value(name: str, cp: int) -> str:
         return "" if extensions in ("", _SCRIPT[cp]) else extensions
     if name == "Canonical_Combining_Class":
         return str(_normalization.CANONICAL_COMBINING_CLASS.get(cp, 0))
-    if name == "Identifier_Status":
-        return "Allowed" if cp in _ALLOWED else "Restricted"
-    if name == "Identifier_Type":
-        return " ".join(sorted(_IDENTIFIER_TYPE[cp].split()))
     if name == "Bidi_Class":
         return _bidi.bidi_class(cp)
     if name == "Bidi_Mirroring_Glyph":

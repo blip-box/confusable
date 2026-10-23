@@ -281,8 +281,18 @@ def normalization() -> str:
         return [c for part in direct[cp] for c in full(part)]
 
     combining = {cp: int(fields[3]) for cp, fields in data.items() if fields[3] != "0"}
+    excluded = _binary(
+        fetch("ucd/DerivedNormalizationProps.txt"), "Full_Composition_Exclusion"
+    )
+    # Primary composites: two-character canonical decompositions that NFC
+    # recomposes, which excludes singletons and Full_Composition_Exclusion.
+    compositions = {
+        (parts[0], parts[1]): cp
+        for cp, parts in direct.items()
+        if len(parts) == 2 and not excluded[cp]
+    }
     return _module(
-        "Canonical decompositions and combining classes, for NFD.",
+        "Canonical decompositions, compositions and combining classes.",
         [
             "# The full canonical decomposition of every character that has one,",
             "# except Hangul syllables, which decompose algorithmically.",
@@ -297,6 +307,15 @@ def normalization() -> str:
             "# Canonical_Combining_Class, for the characters where it is not 0.",
             "CANONICAL_COMBINING_CLASS: dict[int, int] = {",
             *(f"    0x{cp:04X}: {ccc}," for cp, ccc in sorted(combining.items())),
+            "}",
+            "",
+            "# The primary composites NFC builds, by the pair they compose from,",
+            "# except Hangul syllables, which compose algorithmically.",
+            "CANONICAL_COMPOSITION: dict[tuple[int, int], int] = {",
+            *(
+                f"    (0x{first:04X}, 0x{second:04X}): 0x{cp:04X},"
+                for (first, second), cp in sorted(compositions.items())
+            ),
             "}",
         ],
     )

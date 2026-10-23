@@ -24,6 +24,13 @@ RULES = {
         "script sets lack Hntl, and strings that are single-script only through "
         "Hntl (Latin with Han) get a lower restriction level."
     ),
+    "rust-ignores-canonical-equivalence": (
+        "UTS #39 section 3.1 applies canonical equivalence when testing for "
+        "Allowed characters, so a string is in the profile if its decomposed "
+        "or composed form is. unicode-security tests the characters as "
+        "written, so where the two disagree it puts the string at a different "
+        "restriction level."
+    ),
     "rust-unknown-is-empty": (
         "Unassigned and private-use code points have Script_Extensions {Zzzz} "
         "(Unknown), so by UTS #39 section 5.1 a string made only of them has "
@@ -102,6 +109,7 @@ def cross_check(strings: list[str], icu: dict[str, str], rust: dict[str, str]) -
     icu_props = _properties(icu["properties"])
     rust_props = _properties(rust["properties"])
     ignorable = set(icu_props["Default_Ignorable_Code_Point"])
+    allowed = {cp for cp, v in icu_props["Identifier_Status"].items() if v == "Allowed"}
 
     # NFD of every code point must match exactly.
     icu_nfd, rust_nfd = _codepoint_map(icu["nfd"]), _codepoint_map(rust["nfd"])
@@ -161,7 +169,7 @@ def cross_check(strings: list[str], icu: dict[str, str], rust: dict[str, str]) -
     icu_rows = [line.split("\t") for line in icu["strings"].splitlines()]
     rust_rows = [line.split("\t") for line in rust["strings"].splitlines()]
     for text, icu_row, rust_row in zip(strings, icu_rows, rust_rows, strict=True):
-        _, internal, _, nfd, rss, level, *_ = icu_row
+        _, internal, _, nfd, rss, level, checks, *_ = icu_row
         r_skeleton, r_nfd, r_level, r_rss = rust_row
         label = " ".join(f"{ord(c):04X}" for c in text) or "<empty>"
         has_ignorable = any(ord(c) in ignorable for c in text)
@@ -195,8 +203,19 @@ def cross_check(strings: list[str], icu: dict[str, str], rust: dict[str, str]) -
         else:
             report.fail("resolved script set", f"{label} icu={rss} rust={r_rss}")
 
+        # In the profile as written, and under canonical equivalence.
+        written_allowed = all(ord(c) in allowed for c in text)
+        canonically_allowed = "CHAR_LIMIT" not in checks.split()
         if level == r_level:
             report.same("restriction level")
+        elif written_allowed != canonically_allowed and (r_level == "UNRESTRICTED") != (
+            written_allowed
+        ):
+            report.explain(
+                "restriction level",
+                "rust-ignores-canonical-equivalence",
+                f"{label} icu={level} rust={r_level}",
+            )
         elif level == "SINGLE_SCRIPT" and rss != "ALL" and _strip(rss, "Hntl") == "":
             report.explain(
                 "restriction level",

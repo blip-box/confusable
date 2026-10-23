@@ -18,10 +18,11 @@ with the API of `confusable_homoglyphs` 3.3.1.
 Packaging, CI, the conformance harness, generated Unicode tables for every v1
 feature, NFD, the Unicode Bidirectional Algorithm, look-alike detection
 (`skeleton()`, `match()`, `Match`) and mixed-script detection with restriction
-levels (`is_mixed_script()`, `restriction_level()`, `RestrictionLevel`), all
-passing their conformance tests. Identifier checks, invisible characters, mixed
-numbers and graphemes are not written yet; their conformance tests are strict
-xfails.
+levels (`is_mixed_script()`, `restriction_level()`, `RestrictionLevel`), the
+identifier checks (`is_allowed()`, `identifier_status()`, `identifier_types()`,
+`isxidstart()`, `isxidcontinue()`) and NFC, all passing their conformance tests.
+Invisible characters, joining controls, mixed numbers and graphemes are not
+written yet; their conformance tests are strict xfails.
 
 ## Decisions
 
@@ -38,6 +39,7 @@ xfails.
 | Bidi fast path | UTS #39 says left-to-right text without R or AL characters keeps its order. That is wrong: a shortcut must also rule out AN, RLE, RLO and RLI (see `src/confusable/_bidi.py`). |
 | Look-alike API | `skeleton(text, direction="ltr")`, where `direction` is `"ltr"`, `"rtl"`, `"auto"` (UTS #39's FS) or `None` for internalSkeleton; and `match(a, b, direction="ltr")`, which returns `None` when the strings are not confusable and otherwise one `Match`: `SINGLE_SCRIPT`, `MIXED_SCRIPT` or `WHOLE_SCRIPT`. The values are exclusive, and `Match.mixed_script` is true for both mixed kinds. `None` rather than a false object, so `is not None` checks are safe, and exclusive values so `==` cannot miss whole-script spoofs. |
 | Restriction levels | `restriction_level(text)` returns a `RestrictionLevel` IntEnum numbered as in UTS #39 (ASCII_ONLY=1 to UNRESTRICTED=6), so lower is more restrictive. The identifier profile is the General Security Profile. Step 7's Recommended scripts are UAX #31 revision 45 Table 5, kept in `_restriction.py` because no data file lists them; Bopomofo has been Limited Use since Unicode 17. |
+| Identifier profile | The General Security Profile (Identifier_Status=Allowed) under canonical equivalence, as UTS #39 section 3.1 says: each normalization segment passes if it is all Allowed in its NFD or its NFC form, so the answer does not depend on how the text is encoded. ICU and Rust test the characters as written; ICU patch 0006 makes the oracle follow the spec. `restriction_level` step 1 uses the same test. ZWJ and ZWNJ stay outside the profile until the joining-control contexts of section 3.1.1.1 are implemented. |
 | v1 scope | `skeleton()`, a two-string comparison (do not call it `is_confusable()` on a module named `confusable`), restriction levels, mixed-script detection, identifier status and type, invisible and control characters, UAX #31 `isxidstart`/`isxidcontinue` equivalents, grapheme iteration and safe truncation, and the compat module. |
 | Out of scope | Transliteration (use `anyascii`), generating confusable variants. |
 
@@ -77,9 +79,10 @@ CI's `generated` job runs both checks.
 - `src/confusable/_scripts.py`: augmented and resolved script sets (section 5.1).
 - `src/confusable/_restriction.py`: `is_mixed_script`, `restriction_level` and
   `RestrictionLevel` (sections 5.1 and 5.2).
-- `src/confusable/_identifiers.py`: the General Security Profile.
+- `src/confusable/_identifiers.py`: the General Security Profile, Identifier_Status
+  and Identifier_Type, XID_Start and XID_Continue.
 - `src/confusable/_bidi.py`: the Unicode Bidirectional Algorithm, for bidiSkeleton.
-- `src/confusable/_normalize.py`: NFD on the generated tables.
+- `src/confusable/_normalize.py`: NFD and NFC on the generated tables.
 - `src/confusable/_lookup.py`: lookups in the generated runs and ranges.
 - `src/confusable/_data/`: generated Unicode tables, one module per area (bidi,
   confusables, emoji, graphemes, identifiers, normalization, properties,
@@ -141,6 +144,9 @@ CI's `generated` job runs both checks.
   the title becomes the commit on `main`; CI checks the title, and the commit-msg
   hook (commitlint) checks commits locally.
 - One PR per workstream, on a branch named `<type>/<topic>`, e.g. `feat/skeleton`.
+- When a PR is stacked on another, retarget it to `main` before deleting the base
+  branch: deleting the base first closes the stacked PR, and a closed PR cannot be
+  retargeted.
 - The version lives in `pyproject.toml` and, as a literal, in
   `src/confusable/__init__.py` (reading it from package metadata would add about
   100 ms to every import). Change both; `tests/test_package.py` checks they match.
@@ -195,9 +201,9 @@ its hash pins it.
 Each item is its own pull request:
 
 1. Core API, one PR per module where sensible, each wiring its operations into
-   `tests/conformance/adapter.py`: identifiers, invisible characters and the
-   section 5.3 and 5.4 checks, graphemes. Skeletons, `match`, mixed scripts and
-   restriction levels are done.
+   `tests/conformance/adapter.py`: invisible characters, joining controls
+   (section 3.1.1.1) and the section 5.3 and 5.4 checks, then graphemes.
+   Skeletons, `match`, mixed scripts, restriction levels and identifiers are done.
 2. `confusable.compat.homoglyphs`, with differential tests against
    `confusable_homoglyphs` 3.3.1.
 3. First alpha on PyPI via trusted publishing.
