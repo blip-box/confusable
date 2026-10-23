@@ -110,7 +110,7 @@ class StringCase:
     failed_checks: frozenset[str]
     decimal_zeros: frozenset[str]
     grapheme_boundaries: tuple[int, ...]
-    # R″ of bidiSkeleton: display order with UAX #9 L3 and L4 applied.
+    # R'' of bidiSkeleton: display order with UAX #9 L3 and L4 applied.
     display_ltr: str
     display_rtl: str
 
@@ -192,9 +192,9 @@ def grapheme_break_tests() -> tuple[GraphemeCase, ...]:
             chars: list[str] = []
             boundaries = []
             for token in data:
-                if token == "÷":
+                if token == "\u00f7":
                     boundaries.append(len(chars))
-                elif token != "×":
+                elif token != "\u00d7":
                     chars.append(chr(int(token, 16)))
             cases.append(GraphemeCase(number, "".join(chars), tuple(boundaries)))
     return tuple(cases)

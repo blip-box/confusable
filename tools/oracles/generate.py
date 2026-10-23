@@ -278,7 +278,7 @@ def render(
             "row), MIXED_NUMBERS (digits from more than one decimal system),",
             "HIDDEN_OVERLAY (a mark hidden by its base). Column 9 lists the zero",
             "digit of each decimal system used. Column 10 lists grapheme cluster",
-            "boundaries as code point offsets. Columns 11 and 12 are R″ of",
+            "boundaries as code point offsets. Columns 11 and 12 are R\u2033 of",
             "bidiSkeleton: the input in display order, with combining marks after",
             "their base (UAX #9 L3) and mirrored glyphs (L4). internalSkeleton of",
             "column 11 is column 2, and of column 12 is column 4.",

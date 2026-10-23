@@ -163,7 +163,7 @@ UnicodeString bidiSkeleton(const USpoofChecker *sc, UBiDiDirection direction,
   return out;
 }
 
-// R″ of UTS #39 bidiSkeleton: the text in display order, with combining marks
+// R'' of UTS #39 bidiSkeleton: the text in display order, with combining marks
 // kept after their base (L3) and mirrored glyphs (L4), built the way the
 // patched uspoof_getBidiSkeleton builds it (patches 0002 and 0004): each
 // paragraph reordered as its own line.

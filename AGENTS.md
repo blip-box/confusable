@@ -117,6 +117,12 @@ CI's `generated` job runs both checks.
 - Never edit generated tables or fixtures by hand. Change the generator, the corpus
   or the oracles and regenerate; CI fails on fixtures that a fresh run does not
   reproduce.
+- Python source is ASCII. Write every other character as an escape (`"p\u0430ypal"`),
+  so no look-alike, invisible or bidirectional character can hide in the code; other
+  tracked files may use visible non-ASCII characters but none of those.
+  `tests/test_source_hygiene.py` and ruff's `PLE25` rules enforce this. Agents: a
+  `\u` escape written in a tool parameter can reach the file as the literal
+  character, so check the bytes after writing one.
 - Do not use Python's `unicodedata` for data the specifications define: it follows
   the interpreter's Unicode version (13.0 on Python 3.10), not the pinned one.
 - Conformance tests reach the library only through `tests/conformance/adapter.py`.

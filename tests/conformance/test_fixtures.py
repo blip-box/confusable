@@ -117,7 +117,7 @@ def test_grapheme_break_tests_parse() -> None:
     cases = oracle_data.grapheme_break_tests()
     path = oracle_data.FIXTURES / "GraphemeBreakTest.txt"
     with path.open(encoding="utf-8") as lines:
-        assert len(cases) == sum(line.startswith("÷") for line in lines)
+        assert len(cases) == sum(line.startswith("\u00f7") for line in lines)
     for case in cases:
         assert case.boundaries[0] == 0
         assert case.boundaries[-1] == len(case.text)

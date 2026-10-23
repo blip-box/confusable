@@ -69,7 +69,7 @@ def bidi_classes(
 
 
 def bidi_display(text: str, direction: Literal["LTR", "RTL"]) -> str:
-    """R″ of UTS #39 bidiSkeleton: display order with UAX #9 L3 and L4."""
+    """R'' of UTS #39 bidiSkeleton: display order with UAX #9 L3 and L4."""
     return _bidi.display(text, direction)
 
 
