@@ -5,33 +5,60 @@ Identifier_Status=Allowed, under canonical equivalence; Identifier_Type says
 why each character has its status. XID_Start and XID_Continue are the UAX #31
 identifier properties, as Python 3.15's unicodedata.isxidstart() and
 isxidcontinue() report them, here at the pinned Unicode version on any Python.
+
+The tables load on first use, so that importing the package stays fast.
 """
 
 from __future__ import annotations
 
 import enum
 from collections.abc import Iterator
+from functools import cache
 
-from confusable._data import identifiers as _data
-from confusable._data.normalization import (
-    CANONICAL_COMBINING_CLASS,
-    CANONICAL_COMPOSITION,
-)
 from confusable._lookup import Ranges, Runs
-from confusable._normalize import nfc, nfd
+from confusable._normalize import combining_classes, compositions, nfc, nfd
 
-_ALLOWED = Ranges(_data.IDENTIFIER_ALLOWED_RANGES)
-_TYPES = Runs(_data.IDENTIFIER_TYPE_RUNS)
-_XID_START = Ranges(_data.XID_START_RANGES)
-_XID_CONTINUE = Ranges(_data.XID_CONTINUE_RANGES)
 
-# Starters that can compose with the character before them: the second half
-# of a primary composite, and the Hangul vowel and trailing jamo.
-_COMBINES_BACKWARD = frozenset(
-    {second for _, second in CANONICAL_COMPOSITION}
-    | set(range(0x1161, 0x1176))
-    | set(range(0x11A8, 0x11C3))
-)
+@cache
+def _allowed() -> Ranges:
+    from confusable._data.identifiers import IDENTIFIER_ALLOWED_RANGES
+
+    return Ranges(IDENTIFIER_ALLOWED_RANGES)
+
+
+@cache
+def _types() -> Runs:
+    from confusable._data.identifiers import IDENTIFIER_TYPE_RUNS
+
+    return Runs(IDENTIFIER_TYPE_RUNS)
+
+
+@cache
+def _xid_start() -> Ranges:
+    from confusable._data.identifiers import XID_START_RANGES
+
+    return Ranges(XID_START_RANGES)
+
+
+@cache
+def _xid_continue() -> Ranges:
+    from confusable._data.identifiers import XID_CONTINUE_RANGES
+
+    return Ranges(XID_CONTINUE_RANGES)
+
+
+@cache
+def _combines_backward() -> frozenset[int]:
+    """Return the starters that can compose with the character before them.
+
+    They are the second half of a primary composite, and the Hangul vowel and
+    trailing jamo.
+    """
+    return frozenset(
+        {second for _, second in compositions()}
+        | set(range(0x1161, 0x1176))
+        | set(range(0x11A8, 0x11C3))
+    )
 
 
 class IdentifierStatus(enum.Enum):
@@ -76,7 +103,7 @@ def identifier_status(char: str) -> IdentifierStatus:
     >>> identifier_status("\u200d")  # ZERO WIDTH JOINER
     <IdentifierStatus.RESTRICTED: 'Restricted'>
     """
-    if _code_point(char, "identifier_status") in _ALLOWED:
+    if _code_point(char, "identifier_status") in _allowed():
         return IdentifierStatus.ALLOWED
     return IdentifierStatus.RESTRICTED
 
@@ -89,30 +116,28 @@ def identifier_types(char: str) -> frozenset[IdentifierType]:
     >>> sorted(t.value for t in identifier_types("\u200d"))
     ['Default_Ignorable']
     """
-    types = _TYPES[_code_point(char, "identifier_types")]
+    types = _types()[_code_point(char, "identifier_types")]
     return frozenset(IdentifierType(name) for name in types.split())
 
 
 def isxidstart(char: str) -> bool:
     """Return whether a single character has the XID_Start property (UAX #31)."""
-    return _code_point(char, "isxidstart") in _XID_START
+    return _code_point(char, "isxidstart") in _xid_start()
 
 
 def isxidcontinue(char: str) -> bool:
     """Return whether a single character has XID_Continue (UAX #31)."""
-    return _code_point(char, "isxidcontinue") in _XID_CONTINUE
+    return _code_point(char, "isxidcontinue") in _xid_continue()
 
 
 def _segments(decomposed: str) -> Iterator[str]:
     """Split NFD text where composition cannot reach across."""
+    classes = combining_classes()
+    combines_backward = _combines_backward()
     start = 0
     for i, c in enumerate(decomposed):
         cp = ord(c)
-        if (
-            i > start
-            and cp not in CANONICAL_COMBINING_CLASS
-            and cp not in _COMBINES_BACKWARD
-        ):
+        if i > start and cp not in classes and cp not in combines_backward:
             yield decomposed[start:i]
             start = i
     yield decomposed[start:]
@@ -134,10 +159,11 @@ def is_allowed(text: str) -> bool:
     >>> is_allowed("\u0114"), is_allowed("E\u0306")
     (True, True)
     """
+    allowed = _allowed()
     if text.isascii():
-        return all(ord(c) in _ALLOWED for c in text)
+        return all(ord(c) in allowed for c in text)
     return all(
-        all(ord(c) in _ALLOWED for c in segment)
-        or all(ord(c) in _ALLOWED for c in nfc(segment))
+        all(ord(c) in allowed for c in segment)
+        or all(ord(c) in allowed for c in nfc(segment))
         for segment in _segments(nfd(text))
     )

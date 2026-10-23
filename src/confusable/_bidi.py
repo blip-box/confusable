@@ -21,24 +21,22 @@ UTS #39 notes a fast path: in a left-to-right paragraph, text without R or AL
 characters keeps its order. That is incomplete. Only R, AL, AN, RLE, RLO and
 RLI can bring text to an odd level, so all six must be absent: RLO reverses
 Latin letters, and a neutral between two AN digits resolves to R.
+
+The tables load on first use, so that importing the package stays fast.
 """
 
 from __future__ import annotations
 
 from collections.abc import Sequence
-from dataclasses import dataclass
+from functools import cache
 from typing import Literal
 
-from confusable._data import bidi as _data
 from confusable._lookup import Ranges, Runs
 
 Direction = Literal["LTR", "RTL", "auto"]
 
 MAX_DEPTH = 125
 _BRACKET_STACK_SIZE = 63
-
-_BIDI_CLASS = Runs(_data.BIDI_CLASS_RUNS)
-_COMBINING_MARKS = Ranges(_data.COMBINING_MARK_RANGES)
 
 _ISOLATE_INITIATORS = frozenset({"LRI", "RLI", "FSI"})
 _EMBEDDING_INITIATORS = frozenset({"LRE", "RLE", "LRO", "RLO"})
@@ -49,9 +47,38 @@ _NEUTRALS = frozenset({"B", "S", "WS", "ON", "LRI", "RLI", "FSI", "PDI"})
 _TRAILING = frozenset({"WS", "LRI", "RLI", "FSI", "PDI"})
 
 
+@cache
+def _bidi_classes() -> Runs:
+    from confusable._data.bidi import BIDI_CLASS_RUNS
+
+    return Runs(BIDI_CLASS_RUNS)
+
+
+@cache
+def _combining_marks() -> Ranges:
+    from confusable._data.bidi import COMBINING_MARK_RANGES
+
+    return Ranges(COMBINING_MARK_RANGES)
+
+
+@cache
+def _brackets() -> tuple[dict[int, tuple[int, str]], dict[int, int]]:
+    """Return each bracket's pair and type, and the brackets' canonical forms."""
+    from confusable._data.bidi import BIDI_BRACKETS, BRACKET_CANONICAL
+
+    return BIDI_BRACKETS, BRACKET_CANONICAL
+
+
+@cache
+def _mirroring_glyphs() -> dict[int, int]:
+    from confusable._data.bidi import BIDI_MIRRORING_GLYPH
+
+    return BIDI_MIRRORING_GLYPH
+
+
 def bidi_class(cp: int) -> str:
     """Return the Bidi_Class of a code point, as its short name."""
-    return _BIDI_CLASS[cp]
+    return _bidi_classes()[cp]
 
 
 def _odd_above(level: int) -> int:
@@ -93,9 +120,14 @@ def _first_strong(
     return None
 
 
-@dataclass
 class Paragraph:
-    """One resolved paragraph of the input (rule P1)."""
+    """One resolved paragraph of the input (rule P1).
+
+    A plain class: a dataclass would import inspect, and a NamedTuple
+    annotationlib on Python 3.14, each adding milliseconds to the import.
+    """
+
+    __slots__ = ("display_levels", "level", "levels", "start")
 
     start: int
     level: int
@@ -103,6 +135,18 @@ class Paragraph:
     levels: list[int | None]
     # Levels used for display, with the X9-removed characters placed too.
     display_levels: list[int]
+
+    def __init__(
+        self,
+        start: int,
+        level: int,
+        levels: list[int | None],
+        display_levels: list[int],
+    ) -> None:
+        self.start = start
+        self.level = level
+        self.levels = levels
+        self.display_levels = display_levels
 
 
 def resolve(
@@ -409,25 +453,22 @@ def _resolve_sequence(
             resolved[i] = level
 
 
-def _canonical_bracket(cp: int) -> int:
-    return _data.BRACKET_CANONICAL.get(cp, cp)
-
-
 def _bracket_pairs(t: list[str], code_points: list[int]) -> list[tuple[int, int]]:
     """BD16: bracket pairs in an isolating run sequence, by opening position."""
+    brackets, canonical = _brackets()
     stack: list[tuple[int, int]] = []
     pairs = []
     for k, cp in enumerate(code_points):
-        info = _data.BIDI_BRACKETS.get(cp)
+        info = brackets.get(cp)
         if info is None or t[k] != "ON":
             continue
         pair, kind = info
         if kind == "o":
             if len(stack) == _BRACKET_STACK_SIZE:
                 return []
-            stack.append((_canonical_bracket(pair), k))
+            stack.append((canonical.get(pair, pair), k))
             continue
-        closing = _canonical_bracket(cp)
+        closing = canonical.get(cp, cp)
         for depth in range(len(stack) - 1, -1, -1):
             if stack[depth][0] == closing:
                 pairs.append((stack[depth][1], k))
@@ -507,8 +548,11 @@ def display(text: str, direction: Direction) -> str:
 
     The input to internalSkeleton in bidiSkeleton(direction, text).
     """
+    classes = _bidi_classes()
+    marks = _combining_marks()
+    mirrored = _mirroring_glyphs()
     code_points = [ord(c) for c in text]
-    types = [bidi_class(cp) for cp in code_points]
+    types = [classes[cp] for cp in code_points]
     out: list[str] = []
     for paragraph in resolve(types, direction, code_points):
         start = paragraph.start
@@ -531,10 +575,10 @@ def display(text: str, direction: Direction) -> str:
             j = last
             while j > first:
                 k = j - 1
-                while k > first and code_points[start + k] in _COMBINING_MARKS:
+                while k > first and code_points[start + k] in marks:
                     k -= 1
                 base = code_points[start + k]
-                out.append(chr(_data.BIDI_MIRRORING_GLYPH.get(base, base)))
+                out.append(chr(mirrored.get(base, base)))
                 out.extend(text[start + k + 1 : start + j])
                 j = k
     return "".join(out)

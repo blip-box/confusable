@@ -3,6 +3,8 @@
 A resolved script set is either a frozenset of ISO 15924 codes or ALL, the set
 of all scripts, which characters with Script_Extensions {Common} or
 {Inherited} contribute. ALL is represented by None.
+
+The tables load on first use, so that importing the package stays fast.
 """
 
 from __future__ import annotations
@@ -10,13 +12,18 @@ from __future__ import annotations
 from collections.abc import Iterable
 from functools import cache
 
-from confusable._data import scripts as _data
 from confusable._lookup import Runs
 
 ScriptSet = frozenset[str] | None  # None is ALL, the set of all scripts.
 
-_SCRIPT = Runs(_data.SCRIPT_RUNS)
-_SCRIPT_EXTENSIONS = Runs(_data.SCRIPT_EXTENSIONS_RUNS)
+
+@cache
+def _script_runs() -> tuple[Runs, Runs]:
+    """Return the Script and Script_Extensions runs."""
+    from confusable._data.scripts import SCRIPT_EXTENSIONS_RUNS, SCRIPT_RUNS
+
+    return Runs(SCRIPT_RUNS), Runs(SCRIPT_EXTENSIONS_RUNS)
+
 
 # UTS #39 revision 34: the writing systems that span several scripts.
 _AUGMENTATIONS = {
@@ -41,7 +48,8 @@ def _augment(codes: str) -> ScriptSet:
 
 def augmented_script_set(cp: int) -> ScriptSet:
     """Return a character's Script_Extensions, augmented per UTS #39 5.1."""
-    return _augment(_SCRIPT_EXTENSIONS[cp] or _SCRIPT[cp])
+    script, extensions = _script_runs()
+    return _augment(extensions[cp] or script[cp])
 
 
 def resolved_script_set(text: Iterable[str]) -> ScriptSet:
