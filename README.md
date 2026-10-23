@@ -6,8 +6,8 @@ no runtime dependencies.
 
 > **Status: pre-alpha.** Look-alike detection (`skeleton`, `match`), mixed-script
 > detection, restriction levels, the identifier checks, the mixed-number and
-> combining-mark checks, invisible-character detection and grapheme clusters work
-> and pass their tests; the compatibility module is planned. Nothing is on PyPI yet.
+> combining-mark checks, invisible-character detection, grapheme clusters and the
+> compatibility module work and pass their tests. Nothing is on PyPI yet.
 
 ## Usage
 
@@ -94,6 +94,23 @@ UTS #39's `internalSkeleton`, which ignores display order. Skeletons are for
 comparison, not display, and change with the Unicode version
 (`confusable.unicode_version`), so recompute any you store when it changes.
 
+### Moving from confusable_homoglyphs
+
+`confusable.compat.homoglyphs` has the API of `confusable_homoglyphs` 3.3.1, so
+existing code switches by changing one import:
+
+```python
+from confusable.compat.homoglyphs import categories, confusables
+
+confusables.is_dangerous("p\u0430ypal")  # True
+```
+
+It returns what that package returns, with current Unicode data. It also finds
+Arabic and Hebrew look-alikes, which that package's data misses: its generator
+copies the invisible LEFT-TO-RIGHT MARKs that `confusables.txt` puts around
+right-to-left characters in its comments. For new code, prefer `match` and
+`restriction_level`, which follow UTS #39.
+
 ## What it is for
 
 `confusable` decides whether user-supplied text is safe to accept as an identity: a
@@ -115,7 +132,8 @@ username, display name, project name, slug or filename. Planned for v1:
 - **Grapheme clusters**: iteration and truncation that never split a user-perceived
   character, equivalent to Python 3.15's `unicodedata.iter_graphemes()`.
 - **A compatibility module**, `confusable.compat.homoglyphs`, with the same API as
-  `confusable_homoglyphs` 3.3.1, so existing code can switch by changing one import.
+  `confusable_homoglyphs` 3.3.1, so existing code can switch by changing one import,
+  and that package's tests run against it.
 
 The Unicode data is pinned to a single Unicode version (18.0.0) and generated into the
 package, so installing needs no network access and no compiler.

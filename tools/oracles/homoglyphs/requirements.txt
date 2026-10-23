@@ -1,0 +1,10 @@
+# The oracle for confusable.compat.homoglyphs: confusable_homoglyphs 3.3.1, the
+# package it replaces, and click, which that package's data generator
+# (confusable_homoglyphs.cli) imports. tools/oracles/generate.py installs these
+# into tools/oracles/homoglyphs/.build/ with --require-hashes.
+confusable-homoglyphs==3.3.1 \
+    --hash=sha256:84c92cb79dc7f55aa290d0762b2349abd8dee4c16fbe6f99eac978d394e2e6a1 \
+    --hash=sha256:b995001c9b2e1b4cea0cf5f3840a7c79188a8cbbad053d693572bd8c1c1ec460
+click==8.5.0 \
+    --hash=sha256:255bc9599cf7748b4b1a446ccc735421bd08a2ae529a8b88597d3de5664ee360 \
+    --hash=sha256:ba0d2089de75ea0310e2dde03160e6ca10009947fb95a182f9b54021bb272e34
