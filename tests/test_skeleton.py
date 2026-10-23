@@ -8,7 +8,7 @@ import confusable
 from confusable import Match, match, skeleton
 
 LTR_STRONG = "abc"
-RTL_STRONG = "אב"  # HEBREW LETTER ALEF, BET
+RTL_STRONG = "\u05d0\u05d1"  # HEBREW LETTER ALEF, BET
 
 # Letters of both directions, digits and neutrals; no paragraph separators
 # or isolates, so the first strong character sets the paragraph direction.
@@ -46,7 +46,7 @@ def test_match_is_false_when_skeletons_differ() -> None:
 
 def test_match_uses_the_display_direction() -> None:
     # UTS #39 section 4: LTR-confusable, but not confusable without bidi.
-    s1, s2 = "A1<שׂ", "Αשֺ>1"
+    s1, s2 = "A1<\u05e9\u05c2", "\u0391\u05e9\u05ba>1"
     assert match(s1, s2) == Match.MIXED_SCRIPT
     assert not match(s1, s2, None)
     assert not match(s1, s2, "rtl")

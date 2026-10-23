@@ -503,7 +503,7 @@ def levels_and_order(
 
 
 def display(text: str, direction: Direction) -> str:
-    """Text in display order with L3 and L4 applied: UTS #39's R″.
+    """Text in display order with L3 and L4 applied: UTS #39's R''.
 
     The input to internalSkeleton in bidiSkeleton(direction, text).
     """

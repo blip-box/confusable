@@ -106,6 +106,7 @@ select = [
     "B",   # flake8-bugbear
     "PT",  # flake8-pytest-style
     "RUF", # ruff-specific rules
+    "PLE25", # bidi controls and invisible characters in source (Trojan Source)
 ]
 ignore = [
     "D203", # one-blank-line-before-class (conflicts with D211)

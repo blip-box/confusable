@@ -13,7 +13,7 @@ no runtime dependencies.
 ```python
 import confusable
 
-confusable.skeleton("p\u0430ypal")  # 'paypal' (with a Cyrillic а)
+confusable.skeleton("p\u0430ypal")  # 'paypal' (with CYRILLIC SMALL LETTER A)
 confusable.match("paypal", "p\u0430ypal")  # Match.MIXED_SCRIPT, which is true
 confusable.match("rn", "m")  # Match.SINGLE_SCRIPT
 confusable.match("paypal", "paypa1x")  # Match(0), which is false
