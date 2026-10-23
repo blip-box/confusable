@@ -6,8 +6,8 @@ no runtime dependencies.
 
 > **Status: pre-alpha.** Look-alike detection (`skeleton`, `match`), mixed-script
 > detection, restriction levels, the identifier checks, the mixed-number and
-> combining-mark checks and invisible-character detection work and pass their
-> tests; graphemes and the compatibility module are planned. Nothing is on PyPI yet.
+> combining-mark checks, invisible-character detection and grapheme clusters work
+> and pass their tests; the compatibility module is planned. Nothing is on PyPI yet.
 
 ## Usage
 
@@ -75,6 +75,17 @@ confusable.find_invisible("hi\U000e0068\U000e0069")  # two Invisible.TAG: hidden
 confusable.has_invisible(
     "\U0001f468\u200d\U0001f469\u200d\U0001f467"
 )  # False: an emoji
+```
+
+Grapheme clusters, the characters a reader sees, and truncation that never cuts
+one apart. A cluster can be any size, so pair a grapheme limit with a size limit:
+
+```python
+[
+    str(g) for g in confusable.iter_graphemes("e\u0301\U0001f1fa\U0001f1f8")
+]  # ['e' + accent, a flag]
+confusable.truncate(name, 32)  # at most 32 graphemes
+confusable.truncate(bio, 300, max_utf8_bytes=3000)  # and at most 3000 bytes
 ```
 
 `skeleton(text, direction)` takes the paragraph direction text is shown in:
