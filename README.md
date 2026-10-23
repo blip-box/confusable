@@ -4,10 +4,30 @@ Unicode spoofing and confusable detection for Python, following
 [Unicode Technical Standard #39](https://www.unicode.org/reports/tr39/). Pure Python,
 no runtime dependencies.
 
-> **Status: pre-alpha.** The conformance test harness, the Unicode data tables and
-> two building blocks (NFD and the Unicode Bidirectional Algorithm) are done; the
-> detection API is not written yet. Nothing is on PyPI, and the features below are
-> planned, not implemented.
+> **Status: pre-alpha.** Look-alike detection (`skeleton` and `match`) works and
+> passes its conformance tests; the other features below are planned. Nothing is on
+> PyPI yet.
+
+## Usage
+
+```python
+import confusable
+
+confusable.skeleton("p\u0430ypal")  # 'paypal' (with a Cyrillic а)
+confusable.match("paypal", "p\u0430ypal")  # Match.MIXED_SCRIPT, which is true
+confusable.match("rn", "m")  # Match.SINGLE_SCRIPT
+confusable.match("paypal", "paypa1x")  # Match(0), which is false
+
+# The skeleton follows display order, so a right-to-left override is seen
+# the way a reader sees it:
+confusable.skeleton("invoice\u202egpj.exe")  # 'invoiceexe.jpg'
+```
+
+`skeleton(text, direction)` takes the paragraph direction text is shown in:
+`"ltr"` (the default, UTS #39's `skeleton`), `"rtl"`, `"auto"`, or `None` for
+UTS #39's `internalSkeleton`, which ignores display order. Skeletons are for
+comparison, not display, and change with the Unicode version
+(`confusable.unicode_version`), so recompute any you store when it changes.
 
 ## What it is for
 

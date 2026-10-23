@@ -16,11 +16,10 @@ with the API of `confusable_homoglyphs` 3.3.1.
 ## Current state
 
 Packaging, CI, the conformance harness, generated Unicode tables for every v1
-feature, and two building blocks that pass their conformance tests: NFD
-(`confusable._normalize`) and the Unicode Bidirectional Algorithm
-(`confusable._bidi`). The detection API itself is not written yet; its
-conformance tests are strict xfails. The public package exposes `__version__`
-and `unicode_version`.
+feature, NFD, the Unicode Bidirectional Algorithm, and look-alike detection: the
+public `skeleton()`, `match()` and `Match`, which pass their conformance tests.
+Restriction levels, identifier checks, invisible characters and graphemes are
+not written yet; their conformance tests are strict xfails.
 
 ## Decisions
 
@@ -35,6 +34,7 @@ and `unicode_version`.
 | New Unicode versions | A weekly workflow opens an issue with the checklist, rather than a PR: the move needs a person to read the new spec revisions and an ICU release for the oracles, which usually ships weeks after Unicode. `python -m tools.unicode_release prepare VERSION` does the mechanical part. |
 | Specification | UTS #39 revision 34. Its `skeleton(X)` is `bidiSkeleton(LTR, X)`, which applies the Unicode Bidirectional Algorithm (UAX #9 revision 52) before the confusable mapping. v1 implements the full algorithm. |
 | Bidi fast path | UTS #39 says left-to-right text without R or AL characters keeps its order. That is wrong: a shortcut must also rule out AN, RLE, RLO and RLI (see `src/confusable/_bidi.py`). |
+| Look-alike API | `skeleton(text, direction="ltr")`, where `direction` is `"ltr"`, `"rtl"`, `"auto"` (UTS #39's FS) or `None` for internalSkeleton; and `match(a, b, direction="ltr")`, which returns a `Match` flag: `SINGLE_SCRIPT`, or `MIXED_SCRIPT` with `WHOLE_SCRIPT` when both strings are single-script, and an empty, false `Match(0)` when the strings are not confusable. |
 | v1 scope | `skeleton()`, a two-string comparison (do not call it `is_confusable()` on a module named `confusable`), restriction levels, mixed-script detection, identifier status and type, invisible and control characters, UAX #31 `isxidstart`/`isxidcontinue` equivalents, grapheme iteration and safe truncation, and the compat module. |
 | Out of scope | Transliteration (use `anyascii`), generating confusable variants. |
 
@@ -70,6 +70,8 @@ CI's `generated` job runs both checks.
 ## Layout
 
 - `src/confusable/`: the package. It ships `py.typed`; mypy runs in strict mode.
+- `src/confusable/_skeleton.py`: `skeleton`, `match` and `Match` (UTS #39 section 4).
+- `src/confusable/_scripts.py`: augmented and resolved script sets (section 5.1).
 - `src/confusable/_bidi.py`: the Unicode Bidirectional Algorithm, for bidiSkeleton.
 - `src/confusable/_normalize.py`: NFD on the generated tables.
 - `src/confusable/_lookup.py`: lookups in the generated runs and ranges.
@@ -181,8 +183,9 @@ its hash pins it.
 Each item is its own pull request:
 
 1. Core API, one PR per module where sensible, each wiring its operations into
-   `tests/conformance/adapter.py`: skeletons and confusable comparison first, then
-   scripts and restriction levels, identifiers, invisible characters, graphemes.
+   `tests/conformance/adapter.py`: scripts and restriction levels (built on
+   `_scripts.py`), identifiers, invisible characters, graphemes. Skeletons and
+   `match` are done.
 2. `confusable.compat.homoglyphs`, with differential tests against
    `confusable_homoglyphs` 3.3.1.
 3. First alpha on PyPI via trusted publishing.

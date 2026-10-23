@@ -1,0 +1,12 @@
+import doctest
+
+import pytest
+
+from confusable import _skeleton
+
+
+@pytest.mark.parametrize("module", [_skeleton])
+def test_docstring_examples(module: object) -> None:
+    results = doctest.testmod(module, optionflags=doctest.ELLIPSIS)  # type: ignore[arg-type]
+    assert results.attempted > 0
+    assert results.failed == 0
