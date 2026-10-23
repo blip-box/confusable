@@ -1,5 +1,9 @@
-# Pull requests are squash-merged, so the PR title becomes the commit on main.
-# Lint both the title and the individual commits as Conventional Commits.
+# Pull requests are squash-merged, so the PR title becomes the commit on main;
+# lint it as a Conventional Commit. Individual commits are linted locally by
+# the commit-msg hook in .pre-commit-config.yaml. (A CI job also linted them
+# with wagoid/commitlint-github-action, until October 2026: that action runs on
+# Node 20.16.0, which is end-of-life and has no fix for the October Node.js
+# security release.)
 name: Commit lint
 
 on:
@@ -13,21 +17,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  commits:
-    name: commits
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read # check out .commitlintrc.yml and the PR commits
-      pull-requests: read # list the commits in the pull request
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-      - uses: wagoid/commitlint-github-action@b948419dd99f3fd78a6548d48f94e3df7f6bf3ed # v6.2.1
-        with:
-          configFile: .commitlintrc.yml
-
   title:
     name: pr title
     runs-on: ubuntu-latest
