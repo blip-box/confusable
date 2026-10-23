@@ -27,7 +27,7 @@ Every download is pinned: the Unicode files by SHA-256 and version header
 **ICU** (primary). ICU 79.1, built from the 79.1rc source release, which
 implements Unicode 18. The fixtures hold its results. `icu/oracle.cpp` loads
 the pinned `confusables.txt` and fails if ICU's built-in data differs from it.
-ICU is built with six small patches in `icu/patches/`, each of which brings
+ICU is built with seven small patches in `icu/patches/`, each of which brings
 it in line with the current text of UTS #39 and UAX #9 or fixes a bug that
 Unicode 18 data exposes:
 
@@ -47,6 +47,10 @@ Unicode 18 data exposes:
 - `0006-profile-under-canonical-equivalence.patch`: section 3.1 applies
   canonical equivalence when testing for Allowed characters; ICU tests the
   characters as written, so U+0114 failed while E + U+0306 passed.
+- `0007-hidden-overlay-under-canonical-equivalence.patch`: ICU's hidden-overlay
+  check tests the text as written, unlike its repeated-mark check, which tests
+  the NFD form. So I + U+0307 failed while U+0130 passed, and NFC text slipped
+  through.
 
 Drop a patch once ICU ships the change; the fixtures must not change when you do.
 

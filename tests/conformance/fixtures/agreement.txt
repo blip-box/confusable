@@ -13,10 +13,10 @@ Script (non-default entries)	172873	172873
 Script_Extensions (non-default entries)	741	741	
 Identifier_Status (non-default entries)	33792	33792	
 Identifier_Type (non-default entries)	172814	172814	
-string NFD	4098	4098	
-string internalSkeleton	4098	3382	rust-keeps-default-ignorables=716
-resolved script set	4098	3441	rust-lacks-hntl=612 rust-unknown-is-empty=45
-restriction level	4098	4071	rust-ignores-canonical-equivalence=16 rust-lacks-hntl=11
+string NFD	4104	4104	
+string internalSkeleton	4104	3388	rust-keeps-default-ignorables=716
+resolved script set	4104	3441	rust-lacks-hntl=618 rust-unknown-is-empty=45
+restriction level	4104	4077	rust-ignores-canonical-equivalence=16 rust-lacks-hntl=11
 #
 # Rules, with up to three examples each:
 # rust-keeps-default-ignorables: UTS #39 internalSkeleton removes Default_Ignorable_Code_Point characters (step 2). unicode-security 0.1.2 predates that step and keeps them, so its skeleton differs wherever one occurs.

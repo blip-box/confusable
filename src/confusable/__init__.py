@@ -10,6 +10,8 @@ from confusable._identifiers import (
     isxidcontinue,
     isxidstart,
 )
+from confusable._marks import has_hidden_overlay, has_unlikely_marks
+from confusable._numbers import has_mixed_numbers
 from confusable._restriction import RestrictionLevel, is_mixed_script, restriction_level
 from confusable._skeleton import Match, match, skeleton
 
@@ -26,6 +28,9 @@ __all__ = [
     "Match",
     "RestrictionLevel",
     "__version__",
+    "has_hidden_overlay",
+    "has_mixed_numbers",
+    "has_unlikely_marks",
     "identifier_status",
     "identifier_types",
     "is_allowed",

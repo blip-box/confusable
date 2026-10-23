@@ -1,0 +1,24 @@
+ICU's HIDDEN_OVERLAY check tests the identifier as written, while its INVISIBLE
+check tests the NFD form. So U+0130 LATIN CAPITAL LETTER I WITH DOT ABOVE
+passes but its canonical equivalent, I followed by U+0307 COMBINING DOT ABOVE,
+fails (I's confusable prototype is l), and the NFC form of l, U+0323, U+0307
+passes where the NFD form fails. Unicode conformance clause C6 asks processes
+not to treat canonically equivalent strings as distinct, and NFC, the usual
+form for stored identifiers, is the one that slips through. This patch tests
+the NFD form, as confusable does. Drop it once ICU fixes this upstream.
+
+--- a/source/i18n/uspoof.cpp
++++ b/source/i18n/uspoof.cpp
+@@ -592,7 +592,11 @@
+     }
+ 
+     if (0 != (This->fChecks & USPOOF_HIDDEN_OVERLAY)) {
+-        int32_t index = This->findHiddenOverlay(id, *status);
++        // Test the NFD form, as the INVISIBLE check does, so that canonically
++        // equivalent strings get the same result.
++        UnicodeString nfdId;
++        gNfdNormalizer->normalize(id, nfdId, *status);
++        int32_t index = This->findHiddenOverlay(nfdId, *status);
+         if (index != -1) {
+             result |= USPOOF_HIDDEN_OVERLAY;
+         }
