@@ -47,11 +47,13 @@ def is_mixed_script(text: str) -> bool:
     return _scripts.resolved_script_set(text) == frozenset()
 
 
-def restriction_level(text: str) -> RestrictionLevel:
+def restriction_level(text: str, *, joining_controls: bool = False) -> RestrictionLevel:
     r"""Return the UTS #39 section 5.2 restriction level of text.
 
     The identifier profile is the General Security Profile, under canonical
     equivalence (see is_allowed): text outside it is UNRESTRICTED.
+    joining_controls is passed to is_allowed: True allows ZWJ and ZWNJ where
+    UTS #39 section 3.1.1.1 does.
 
     >>> restriction_level("paypal")
     <RestrictionLevel.ASCII_ONLY: 1>
@@ -64,7 +66,7 @@ def restriction_level(text: str) -> RestrictionLevel:
     >>> restriction_level("pay pal")  # a space is outside the profile
     <RestrictionLevel.UNRESTRICTED: 6>
     """
-    if not _identifiers.is_allowed(text):
+    if not _identifiers.is_allowed(text, joining_controls=joining_controls):
         return RestrictionLevel.UNRESTRICTED
     if text.isascii():
         return RestrictionLevel.ASCII_ONLY

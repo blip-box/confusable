@@ -457,6 +457,30 @@ def graphemes() -> str:
     )
 
 
+def joining() -> str:
+    """Build the properties the joining-control contexts of UTS #39 use."""
+    categories = _enumerated(fetch("ucd/IndicSyllabicCategory.txt"), "Other")
+    return _module(
+        "Properties for the joining-control contexts (UTS #39 section 3.1.1.1).",
+        [
+            *_emit_runs(
+                "JOINING_TYPE_RUNS",
+                _enumerated(
+                    fetch("ucd/extracted/DerivedJoiningType.txt"),
+                    "U",
+                    aliases=_aliases("jt"),
+                ),
+                "Joining_Type, by short value name (U is Non_Joining).",
+            ),
+            *_emit_ranges(
+                "VOWEL_DEPENDENT_RANGES",
+                [value == "Vowel_Dependent" for value in categories],
+                "Indic_Syllabic_Category=Vowel_Dependent.",
+            ),
+        ],
+    )
+
+
 def emoji() -> str:
     """Build the valid emoji tag sequences, the one legitimate use of Tags."""
     sequences = []
@@ -484,6 +508,7 @@ TABLES: dict[str, Callable[[], str]] = {
     "emoji.py": emoji,
     "graphemes.py": graphemes,
     "identifiers.py": identifiers,
+    "joining.py": joining,
     "normalization.py": normalization,
     "properties.py": properties,
     "scripts.py": scripts,

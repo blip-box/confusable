@@ -48,6 +48,12 @@ confusable.is_allowed("pay pal")  # False: a space is Restricted
 confusable.is_allowed("\u0114")  # True: U+0114 is Restricted, E + U+0306 is not
 confusable.identifier_types("\u200d")  # {IdentifierType.DEFAULT_IGNORABLE}
 confusable.isxidstart("_"), confusable.isxidcontinue("_")  # (False, True)
+
+# Persian, Malayalam and Sinhala need ZERO WIDTH (NON-)JOINER in some words. The
+# profile excludes both; joining_controls=True allows them only where UTS #39
+# section 3.1.1.1 says they change how the word looks:
+confusable.is_allowed("\u0dc1\u0dca\u200d\u0dbb\u0dd3", joining_controls=True)  # True
+confusable.is_allowed("pay\u200dpal", joining_controls=True)  # False
 ```
 
 Three more checks from UTS #39 sections 5.3 and 5.4 catch digits from different
