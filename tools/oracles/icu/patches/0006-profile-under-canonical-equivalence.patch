@@ -1,0 +1,90 @@
+UTS #39 section 3.1 applies canonical equivalence when testing identifiers
+for Allowed characters: <u, combining diaeresis> is Allowed if both parts are,
+or if u-diaeresis is. ICU tests the characters as written, so whether
+visually identical text passes depends on its encoding (U+0114 is
+Restricted, E + U+0306 is Allowed). This patch tests each normalization
+segment in its NFD and its NFC form, for both the CHAR_LIMIT check and
+restriction-level step 1, using ICU's own normalizers. Drop it once ICU
+applies canonical equivalence upstream.
+
+--- a/source/i18n/uspoof_impl.h
++++ b/source/i18n/uspoof_impl.h
+@@ -86,6 +86,10 @@
+     void getResolvedScriptSetWithout(const UnicodeString& input, UScriptCode script, ScriptSet& result, UErrorCode& status) const;
+     void getNumerics(const UnicodeString& input, UnicodeSet& result, UErrorCode& status) const;
+     URestrictionLevel getRestrictionLevel(const UnicodeString& input, UErrorCode& status) const;
++
++    // Whether input is within the allowed characters under canonical
++    // equivalence (UTS #39 section 3.1).
++    UBool inProfile(const UnicodeString& input, UErrorCode& status) const;
+ 
+     int32_t findHiddenOverlay(const UnicodeString& input, UErrorCode& status) const;
+     bool isIllegalCombiningDotLeadCharacter(UChar32 cp) const;
+--- a/source/i18n/uspoof_impl.cpp
++++ b/source/i18n/uspoof_impl.cpp
+@@ -10,6 +10,7 @@
+ #include "unicode/utypes.h"
+ #include "unicode/uspoof.h"
+ #include "unicode/uchar.h"
++#include "unicode/normalizer2.h"
+ #include "unicode/uniset.h"
+ #include "unicode/utf16.h"
+ #include "utrie2.h"
+@@ -316,9 +317,35 @@
+ }
+ 
+ // Computes the restriction level of a string, according to UTS 39 section 5.2.
++// UTS #39 section 3.1: canonical equivalence applies when testing for allowed
++// characters. Each segment of the text passes if all its characters are
++// allowed in its NFD form or in its NFC form.
++UBool SpoofImpl::inProfile(const UnicodeString& input, UErrorCode& status) const {
++    const Normalizer2* nfd = Normalizer2::getNFDInstance(status);
++    const Normalizer2* nfc = Normalizer2::getNFCInstance(status);
++    if (U_FAILURE(status)) { return false; }
++    UnicodeString decomposed = nfd->normalize(input, status);
++    int32_t length = decomposed.length();
++    int32_t start = 0;
++    for (int32_t i = 0; U_SUCCESS(status);) {
++        UChar32 c = i < length ? decomposed.char32At(i) : 0;
++        if (i == length || (i > start && nfc->hasBoundaryBefore(c))) {
++            UnicodeString segment(decomposed, start, i - start);
++            if (!fAllowedCharsSet->containsAll(segment)
++                    && !fAllowedCharsSet->containsAll(nfc->normalize(segment, status))) {
++                return false;
++            }
++            start = i;
++        }
++        if (i == length) { break; }
++        i += U16_LENGTH(c);
++    }
++    return U_SUCCESS(status);
++}
++
+ URestrictionLevel SpoofImpl::getRestrictionLevel(const UnicodeString& input, UErrorCode& status) const {
+     // Section 5.2 step 1:
+-    if (!fAllowedCharsSet->containsAll(input)) {
++    if (!inProfile(input, status)) {
+         return USPOOF_UNRESTRICTIVE;
+     }
+ 
+--- a/source/i18n/uspoof.cpp
++++ b/source/i18n/uspoof.cpp
+@@ -600,16 +600,8 @@
+ 
+ 
+     if (0 != (This->fChecks & USPOOF_CHAR_LIMIT)) {
+-        int32_t i;
+-        UChar32 c;
+-        int32_t length = id.length();
+-        for (i=0; i<length ;) {
+-            c = id.char32At(i);
+-            i += U16_LENGTH(c);
+-            if (!This->fAllowedCharsSet->contains(c)) {
+-                result |= USPOOF_CHAR_LIMIT;
+-                break;
+-            }
++        if (!This->inProfile(id, *status)) {
++            result |= USPOOF_CHAR_LIMIT;
+         }
+     }
+ 

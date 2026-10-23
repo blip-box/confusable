@@ -110,6 +110,17 @@ def test_nfd_of_corpus_strings() -> None:
     )
 
 
+def test_unicode_normalization_tests_nfc() -> None:
+    # NormalizationTest.txt: c2 == NFC(c1) == NFC(c2) == NFC(c3), and
+    # c4 == NFC(c4) == NFC(c5).
+    assert_all(
+        f"NormalizationTest.txt line {case.line}"
+        for case in oracle_data.normalization_tests()
+        if {adapter.nfc(c) for c in case.columns[:3]} != {case.columns[1]}
+        or {adapter.nfc(c) for c in case.columns[3:]} != {case.columns[3]}
+    )
+
+
 def test_unicode_normalization_tests() -> None:
     # NormalizationTest.txt: c3 == NFD(c1) == NFD(c2) == NFD(c3), and
     # c5 == NFD(c4) == NFD(c5).

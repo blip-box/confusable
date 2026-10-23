@@ -5,8 +5,8 @@ Unicode spoofing and confusable detection for Python, following
 no runtime dependencies.
 
 > **Status: pre-alpha.** Look-alike detection (`skeleton`, `match`), mixed-script
-> detection and restriction levels work and pass their conformance tests; the other
-> features below are planned. Nothing is on PyPI yet.
+> detection, restriction levels and the identifier checks work and pass their
+> conformance tests; the other features below are planned. Nothing is on PyPI yet.
 
 ## Usage
 
@@ -36,6 +36,17 @@ confusable.is_mixed_script("p\u0430ypal")  # True
 
 # Levels are ordered, most restrictive first:
 confusable.restriction_level(name) <= confusable.RestrictionLevel.HIGHLY_RESTRICTIVE
+```
+
+The identifier checks follow UTS #39's General Security Profile, under canonical
+equivalence, so the answer is the same however the text is encoded:
+
+```python
+confusable.is_allowed("paypal")  # True
+confusable.is_allowed("pay pal")  # False: a space is Restricted
+confusable.is_allowed("\u0114")  # True: U+0114 is Restricted, E + U+0306 is not
+confusable.identifier_types("\u200d")  # {IdentifierType.DEFAULT_IGNORABLE}
+confusable.isxidstart("_"), confusable.isxidcontinue("_")  # (False, True)
 ```
 
 `skeleton(text, direction)` takes the paragraph direction text is shown in:

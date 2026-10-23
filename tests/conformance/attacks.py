@@ -121,6 +121,28 @@ ATTACKS: tuple[Attack, ...] = (
     ),
     Attack("japanese-latin", "\u65e5\u672c\u3042a", "Han, Hiragana and Latin"),
     Attack("korean-latin", "abc\uac00", "Latin with a Hangul syllable"),
+    Attack(
+        "canonical-precomposed-restricted",
+        "\u0114",
+        "U+0114 is Restricted, but E + U+0306 is Allowed: in the profile"
+        " under canonical equivalence (UTS #39 section 3.1)",
+    ),
+    Attack(
+        "canonical-decomposed-of-restricted",
+        "E\u0306",
+        "the decomposed form of U+0114, Allowed as written",
+    ),
+    Attack(
+        "canonical-decomposed-restricted",
+        "\u0627\u0653",
+        "ALEF + MADDA ABOVE: U+0653 is Restricted, but the composed U+0622 is Allowed",
+    ),
+    Attack(
+        "canonical-decomposed-restricted-latin",
+        "D\u032d",
+        "D + CIRCUMFLEX BELOW: U+032D is Restricted, but the composed U+1E12"
+        " is Allowed",
+    ),
     Attack("bopomofo-han", "\u3105\u6f22", "Bopomofo with Han"),
     Attack(
         "latin-with-non-recommended-shared-script",

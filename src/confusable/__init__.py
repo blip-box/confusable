@@ -1,6 +1,15 @@
 """Unicode spoofing and confusable detection (UTS #39) in pure Python."""
 
 from confusable import _data
+from confusable._identifiers import (
+    IdentifierStatus,
+    IdentifierType,
+    identifier_status,
+    identifier_types,
+    is_allowed,
+    isxidcontinue,
+    isxidstart,
+)
 from confusable._restriction import RestrictionLevel, is_mixed_script, restriction_level
 from confusable._skeleton import Match, match, skeleton
 
@@ -12,10 +21,17 @@ __version__ = "0.1.0.dev0"
 unicode_version = _data.UNICODE_VERSION
 
 __all__ = [
+    "IdentifierStatus",
+    "IdentifierType",
     "Match",
     "RestrictionLevel",
     "__version__",
+    "identifier_status",
+    "identifier_types",
+    "is_allowed",
     "is_mixed_script",
+    "isxidcontinue",
+    "isxidstart",
     "match",
     "restriction_level",
     "skeleton",
