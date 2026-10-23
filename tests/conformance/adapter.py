@@ -17,10 +17,10 @@ from __future__ import annotations
 from typing import Literal
 
 import confusable
-from confusable import _bidi, _normalize, _scripts
+from confusable import _bidi, _identifiers, _normalize, _scripts
 from confusable._data import bidi as _bidi_data
 from confusable._data import graphemes as _graphemes
-from confusable._data import identifiers as _identifiers
+from confusable._data import identifiers as _identifiers_data
 from confusable._data import normalization as _normalization
 from confusable._data import properties as _properties
 from confusable._data import scripts as _scripts_data
@@ -95,7 +95,7 @@ def restriction_level(text: str) -> str:
     MODERATELY_RESTRICTIVE, MINIMALLY_RESTRICTIVE or UNRESTRICTED, using the
     General Security Profile as the identifier profile.
     """
-    raise NotImplementedYetError("restriction_level")
+    return confusable.restriction_level(text).name
 
 
 def confusable_classes(
@@ -119,7 +119,7 @@ _MATCH_DIRECTION: dict[str, Literal["ltr", "rtl"] | None] = {
 
 def outside_profile(text: str) -> bool:
     """True if any character is outside the General Security Profile."""
-    raise NotImplementedYetError("outside_profile")
+    return not _identifiers.in_profile(text)
 
 
 def repeated_nonspacing_mark(text: str) -> bool:
@@ -151,15 +151,15 @@ _ENUMERATED = {
     "Indic_Conjunct_Break": Runs(_graphemes.INDIC_CONJUNCT_BREAK_RUNS),
 }
 _BINARY = {
-    "XID_Start": Ranges(_identifiers.XID_START_RANGES),
-    "XID_Continue": Ranges(_identifiers.XID_CONTINUE_RANGES),
+    "XID_Start": Ranges(_identifiers_data.XID_START_RANGES),
+    "XID_Continue": Ranges(_identifiers_data.XID_CONTINUE_RANGES),
     "Default_Ignorable_Code_Point": Ranges(_properties.DEFAULT_IGNORABLE_RANGES),
     "Bidi_Control": Ranges(_properties.BIDI_CONTROL_RANGES),
     "Join_Control": Ranges(_properties.JOIN_CONTROL_RANGES),
     "Extended_Pictographic": Ranges(_graphemes.EXTENDED_PICTOGRAPHIC_RANGES),
 }
-_ALLOWED = Ranges(_identifiers.IDENTIFIER_ALLOWED_RANGES)
-_IDENTIFIER_TYPE = Runs(_identifiers.IDENTIFIER_TYPE_RUNS)
+_ALLOWED = Ranges(_identifiers_data.IDENTIFIER_ALLOWED_RANGES)
+_IDENTIFIER_TYPE = Runs(_identifiers_data.IDENTIFIER_TYPE_RUNS)
 
 
 def property_value(name: str, cp: int) -> str:

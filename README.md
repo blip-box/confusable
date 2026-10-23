@@ -4,9 +4,9 @@ Unicode spoofing and confusable detection for Python, following
 [Unicode Technical Standard #39](https://www.unicode.org/reports/tr39/). Pure Python,
 no runtime dependencies.
 
-> **Status: pre-alpha.** Look-alike detection (`skeleton` and `match`) works and
-> passes its conformance tests; the other features below are planned. Nothing is on
-> PyPI yet.
+> **Status: pre-alpha.** Look-alike detection (`skeleton`, `match`), mixed-script
+> detection and restriction levels work and pass their conformance tests; the other
+> features below are planned. Nothing is on PyPI yet.
 
 ## Usage
 
@@ -21,6 +21,21 @@ confusable.match("paypal", "paypa1x")  # Match(0), which is false
 # The skeleton follows display order, so a right-to-left override is seen
 # the way a reader sees it:
 confusable.skeleton("invoice\u202egpj.exe")  # 'invoiceexe.jpg'
+```
+
+Restriction levels (UTS #39 section 5.2) rank how safely a string mixes scripts,
+from `ASCII_ONLY` to `UNRESTRICTED`, using the General Security Profile:
+
+```python
+confusable.restriction_level("caf\u00e9")  # RestrictionLevel.SINGLE_SCRIPT
+confusable.restriction_level("abc\u3042")  # HIGHLY_RESTRICTIVE: Latin with Japanese
+confusable.restriction_level(
+    "p\u0430ypal"
+)  # MINIMALLY_RESTRICTIVE: Latin with Cyrillic
+confusable.is_mixed_script("p\u0430ypal")  # True
+
+# Levels are ordered, most restrictive first:
+confusable.restriction_level(name) <= confusable.RestrictionLevel.HIGHLY_RESTRICTIVE
 ```
 
 `skeleton(text, direction)` takes the paragraph direction text is shown in:

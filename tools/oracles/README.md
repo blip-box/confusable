@@ -27,7 +27,7 @@ Every download is pinned: the Unicode files by SHA-256 and version header
 **ICU** (primary). ICU 79.1, built from the 79.1rc source release, which
 implements Unicode 18. The fixtures hold its results. `icu/oracle.cpp` loads
 the pinned `confusables.txt` and fails if ICU's built-in data differs from it.
-ICU is built with four small patches in `icu/patches/`, each of which brings
+ICU is built with five small patches in `icu/patches/`, each of which brings
 it in line with the current text of UTS #39 and UAX #9 or fixes a bug that
 Unicode 18 data exposes:
 
@@ -40,6 +40,10 @@ Unicode 18 data exposes:
   is gc=Mn or gc=Me; ICU's repeated-mark check only looks at gc=Mn.
 - `0004-bidi-skeleton-per-paragraph.patch`: UAX #9 reorders text only within
   a paragraph, but ICU's bidiSkeleton reorders several paragraphs as one line.
+- `0005-moderately-restrictive-needs-recommended-script.patch`: section 5.2
+  step 7 needs a Recommended script other than Cyrillic and Greek in common;
+  ICU only excludes Cyrillic, Greek and Cherokee, so Latin with Bengali and
+  Myanmar digits, which share only Chakma, came out Moderately Restrictive.
 
 Drop a patch once ICU ships the change; the fixtures must not change when you do.
 

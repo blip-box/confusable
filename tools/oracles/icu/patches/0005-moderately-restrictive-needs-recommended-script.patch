@@ -1,0 +1,32 @@
+UTS #39 section 5.2 step 7 returns Moderately Restrictive only if the
+intersection of the non-Latin entries contains a Recommended script other than
+Cyrillic and Greek. ICU only checks that the intersection is not empty and has
+no Cyrillic, Greek or Cherokee, so Latin with U+09E6 BENGALI DIGIT ZERO and
+U+1040 MYANMAR DIGIT ZERO, whose scripts share only Chakma, comes out
+Moderately Restrictive instead of Minimally. This patch checks for a
+Recommended script with ICU's own script usage data. Drop it once ICU fixes
+this upstream.
+
+--- a/source/i18n/uspoof_impl.cpp
++++ b/source/i18n/uspoof_impl.cpp
+@@ -358,12 +358,14 @@
+         return USPOOF_HIGHLY_RESTRICTIVE;
+     }
+ 
+-    // Section 5.2 step 7:
+-    if (!resolvedNoLatn.isEmpty()
+-            && !resolvedNoLatn.test(USCRIPT_CYRILLIC, status)
+-            && !resolvedNoLatn.test(USCRIPT_GREEK, status)
+-            && !resolvedNoLatn.test(USCRIPT_CHEROKEE, status)) {
+-        return USPOOF_MODERATELY_RESTRICTIVE;
++    // Section 5.2 step 7: the intersection must contain a Recommended script
++    // (UAX #31 Table 5) other than Cyrillic and Greek.
++    for (int32_t i = resolvedNoLatn.nextSetBit(0); i >= 0; i = resolvedNoLatn.nextSetBit(i + 1)) {
++        UScriptCode script = static_cast<UScriptCode>(i);
++        if (script != USCRIPT_CYRILLIC && script != USCRIPT_GREEK
++                && uscript_getUsage(script) == USCRIPT_USAGE_RECOMMENDED) {
++            return USPOOF_MODERATELY_RESTRICTIVE;
++        }
+     }
+ 
+     // Section 5.2 step 8:
