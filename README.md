@@ -5,8 +5,9 @@ Unicode spoofing and confusable detection for Python, following
 no runtime dependencies.
 
 > **Status: pre-alpha.** Look-alike detection (`skeleton`, `match`), mixed-script
-> detection, restriction levels and the identifier checks work and pass their
-> conformance tests; the other features below are planned. Nothing is on PyPI yet.
+> detection, restriction levels, the identifier checks and the mixed-number and
+> combining-mark checks work and pass their conformance tests; the other features
+> below are planned. Nothing is on PyPI yet.
 
 ## Usage
 
@@ -49,6 +50,15 @@ confusable.identifier_types("\u200d")  # {IdentifierType.DEFAULT_IGNORABLE}
 confusable.isxidstart("_"), confusable.isxidcontinue("_")  # (False, True)
 ```
 
+Three more checks from UTS #39 sections 5.3 and 5.4 catch digits from different
+number systems and combining marks that pile up or hide:
+
+```python
+confusable.has_mixed_numbers("1\u0661")  # True: ASCII and Arabic-Indic digits
+confusable.has_unlikely_marks("e\u0301\u0301")  # True: the same accent twice
+confusable.has_hidden_overlay("i\u0307")  # True: a dot above, lost in i's own dot
+```
+
 `skeleton(text, direction)` takes the paragraph direction text is shown in:
 `"ltr"` (the default, UTS #39's `skeleton`), `"rtl"`, `"auto"`, or `None` for
 UTS #39's `internalSkeleton`, which ignores display order. Skeletons are for
@@ -65,6 +75,9 @@ username, display name, project name, slug or filename. Planned for v1:
 - **Restriction levels and mixed-script checks** from UTS #39 section 5, built on the
   Unicode `Scripts` and `Script_Extensions` properties.
 - **Identifier status and type** from the UTS #39 General Security Profile.
+- **Mixed numbers and suspicious combining marks** from UTS #39 sections 5.3 and
+  5.4: digits from different decimal systems, repeated or stacked marks, and a dot
+  above hidden by the letter under it.
 - **Invisible and control characters**: default-ignorable code points, zero-width
   characters, bidirectional controls, and Tag-block "ASCII smuggling", while still
   accepting valid emoji tag sequences such as subdivision flags.

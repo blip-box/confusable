@@ -174,7 +174,6 @@ def test_outside_profile() -> None:
     )
 
 
-@not_implemented("repeated_nonspacing_mark")
 def test_repeated_nonspacing_marks() -> None:
     assert_all(
         show(case.text)
@@ -184,7 +183,6 @@ def test_repeated_nonspacing_marks() -> None:
     )
 
 
-@not_implemented("hidden_overlay")
 def test_hidden_overlays() -> None:
     assert_all(
         show(case.text)
@@ -193,7 +191,6 @@ def test_hidden_overlays() -> None:
     )
 
 
-@not_implemented("decimal_zeros")
 def test_decimal_zeros() -> None:
     assert_all(
         f"{show(case.text)}: expected {sorted(case.decimal_zeros)}, got {sorted(got)}"
