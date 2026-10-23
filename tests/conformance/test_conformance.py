@@ -147,7 +147,6 @@ def test_resolved_script_sets() -> None:
     )
 
 
-@not_implemented("restriction_level")
 def test_restriction_levels() -> None:
     assert_all(
         f"{show(case.text)}: expected {case.restriction_level}, got {got}"
@@ -156,7 +155,6 @@ def test_restriction_levels() -> None:
     )
 
 
-@not_implemented("outside_profile")
 def test_outside_profile() -> None:
     assert_all(
         show(case.text)

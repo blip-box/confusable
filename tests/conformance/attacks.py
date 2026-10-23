@@ -122,6 +122,12 @@ ATTACKS: tuple[Attack, ...] = (
     Attack("japanese-latin", "\u65e5\u672c\u3042a", "Han, Hiragana and Latin"),
     Attack("korean-latin", "abc\uac00", "Latin with a Hangul syllable"),
     Attack("bopomofo-han", "\u3105\u6f22", "Bopomofo with Han"),
+    Attack(
+        "latin-with-non-recommended-shared-script",
+        "a\u09e6\u1040",
+        "Bengali and Myanmar zeros share only Chakma, not a Recommended script:"
+        " Minimally Restrictive under UTS #39 section 5.2 step 7",
+    ),
     Attack("shime-kiri", "\u3006\u5207", "UTS #39 Table 1a example"),
     Attack("hiragana-katakana", "\u306d\u30ac", "UTS #39 Table 1a example"),
     # Invisible characters inside a name.
