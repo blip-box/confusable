@@ -18,39 +18,54 @@ matched sequence must be single-script, and the test runs on the NFC form.
 from __future__ import annotations
 
 from collections.abc import Iterator
+from functools import cache
 
 from confusable import _scripts
-from confusable._data import joining as _joining
-from confusable._data import normalization as _normalization
-from confusable._data import properties as _properties
 from confusable._lookup import Ranges, Runs
-from confusable._normalize import nfc
+from confusable._normalize import combining_classes, nfc
 
 ZWNJ = chr(0x200C)
 ZWJ = chr(0x200D)
 JOINERS = (ZWNJ, ZWJ)
 
-_JOINING_TYPE = Runs(_joining.JOINING_TYPE_RUNS)
-_VOWEL_DEPENDENT = Ranges(_joining.VOWEL_DEPENDENT_RANGES)
-_CATEGORY = Runs(_properties.GENERAL_CATEGORY_RUNS)
-_COMBINING_CLASS = _normalization.CANONICAL_COMBINING_CLASS
 _VIRAMA = 9
 
 _LEFT_JOINING = ("D", "L")  # $LJ: joins to the character after it
 _RIGHT_JOINING = ("D", "R")  # $RJ: joins to the character before it
 
 
+@cache
+def _joining_types() -> Runs:
+    from confusable._data.joining import JOINING_TYPE_RUNS
+
+    return Runs(JOINING_TYPE_RUNS)
+
+
+@cache
+def _dependent_vowels() -> Ranges:
+    from confusable._data.joining import VOWEL_DEPENDENT_RANGES
+
+    return Ranges(VOWEL_DEPENDENT_RANGES)
+
+
+@cache
+def _categories() -> Runs:
+    from confusable._data.properties import GENERAL_CATEGORY_RUNS
+
+    return Runs(GENERAL_CATEGORY_RUNS)
+
+
 def _letter(c: str) -> bool:
-    return _CATEGORY[ord(c)][0] == "L"
+    return _categories()[ord(c)][0] == "L"
 
 
 def _nonspacing(c: str) -> bool:
-    return _CATEGORY[ord(c)] == "Mn"
+    return _categories()[ord(c)] == "Mn"
 
 
 def _combining_nonspacing(c: str) -> bool:
     """$M1: a nonspacing mark with a nonzero canonical combining class."""
-    return _nonspacing(c) and ord(c) in _COMBINING_CLASS
+    return _nonspacing(c) and ord(c) in combining_classes()
 
 
 def _single_script(sequence: str) -> bool:
@@ -60,24 +75,26 @@ def _single_script(sequence: str) -> bool:
 
 def _breaks_cursive_connection(text: str, i: int) -> bool:
     """A1: the ZWNJ at i matches /$LJ $T* ZWNJ $RJ/."""
-    if i + 1 == len(text) or _JOINING_TYPE[ord(text[i + 1])] not in _RIGHT_JOINING:
+    joining_types = _joining_types()
+    if i + 1 == len(text) or joining_types[ord(text[i + 1])] not in _RIGHT_JOINING:
         return False
     start = i - 1
-    while start >= 0 and _JOINING_TYPE[ord(text[start])] == "T":
+    while start >= 0 and joining_types[ord(text[start])] == "T":
         start -= 1
     return (
         start >= 0
-        and _JOINING_TYPE[ord(text[start])] in _LEFT_JOINING
+        and joining_types[ord(text[start])] in _LEFT_JOINING
         and _single_script(text[start : i + 2])
     )
 
 
 def _conjunct_starts(text: str, i: int) -> Iterator[int]:
     """Yield the start of each match of /$L $M* $V $M1*/ that ends at i."""
+    classes = combining_classes()
     virama = i - 1
     while virama >= 0:
         c = text[virama]
-        if _COMBINING_CLASS.get(ord(c)) == _VIRAMA:
+        if classes.get(ord(c)) == _VIRAMA:
             start = virama - 1
             while start >= 0 and _nonspacing(text[start]):
                 start -= 1
@@ -104,7 +121,7 @@ def _non_joiner_in_conjunct(text: str, i: int) -> bool:
 
 def _joiner_in_conjunct(text: str, i: int) -> bool:
     """B: the ZWJ at i matches /$L $M* $V $M1* ZWJ (?!$D)/."""
-    if i + 1 < len(text) and ord(text[i + 1]) in _VOWEL_DEPENDENT:
+    if i + 1 < len(text) and ord(text[i + 1]) in _dependent_vowels():
         return False
     return any(
         _single_script(text[start : i + 1]) for start in _conjunct_starts(text, i)
