@@ -59,10 +59,17 @@ lint = [
     { include-group = "test" }, # mypy checks the tests too
     "mypy>=2.4.0",
     "pre-commit>=4.6.2",
+    # pre-commit seeds pip from virtualenv into hook environments. Earlier
+    # releases seed pip 26.2.1, whose certifi trusts the compromised
+    # eMudhra/emSign root (October 2026); 21.14.13 seeds pip 26.2.2.
+    "virtualenv>=21.14.13",
 ]
 
 [tool.uv]
 default-groups = ["test", "lint"]
+# uv 0.13.4 removed the compromised eMudhra/emSign root from its bundled
+# certificates (GHSA-hq85-5cpj-mr62). setup-uv in CI reads this floor too.
+required-version = ">=0.13.4"
 
 [tool.pytest.ini_options]
 minversion = "9.0"

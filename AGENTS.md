@@ -27,6 +27,7 @@ and `unicode_version`.
 | Topic | Decision |
 |---|---|
 | Runtime dependencies | None. No C extensions. |
+| Tooling security floors | `required-version = ">=0.13.4"` for uv and `virtualenv>=21.14.13` in the lint group, after the October 2026 eMudhra/emSign CA compromise: older uv and the pip that older virtualenv seeds into pre-commit hooks still trust the compromised root. Keep floors (`>=`) for such fixes so a re-lock cannot regress. CI runs no Node except the runner's own, which GitHub patches. |
 | Python | `>=3.10`. CI tests 3.10 to 3.15 on Linux and 3.15 on macOS and Windows. |
 | License | MIT for the code. Unicode data files are under the Unicode License v3; ship that notice next to the generated data. |
 | Unicode data | Generated Python tables are committed, so installs need no network. |
@@ -95,7 +96,8 @@ CI's `generated` job runs both checks.
 - `.github/workflows/unicode-release.yml`: the weekly check for new Unicode
   releases. It opens an issue for a new release, and opens or comments on an
   issue when it fails.
-- `.github/workflows/commit-lint.yml`: commitlint on the PR's commits and its title.
+- `.github/workflows/commit-lint.yml`: checks that the PR title is a Conventional
+  Commit. The commit-msg hook checks individual commits locally.
 - `.github/workflows/dependabot-auto-merge.yml`: auto-merge for non-major Dependabot PRs.
 - `.github/dependabot.yml`: weekly updates for uv, GitHub Actions and pre-commit
   hooks, with a seven-day cooldown on new releases.
@@ -122,7 +124,8 @@ CI's `generated` job runs both checks.
 ### Git and pull requests
 
 - Conventional Commits for every commit and every PR title. PRs are squash-merged, so
-  the title becomes the commit on `main`; commitlint checks both.
+  the title becomes the commit on `main`; CI checks the title, and the commit-msg
+  hook (commitlint) checks commits locally.
 - One PR per workstream, on a branch named `<type>/<topic>`, e.g. `feat/skeleton`.
 - The version lives in `pyproject.toml` and, as a literal, in
   `src/confusable/__init__.py` (reading it from package metadata would add about
