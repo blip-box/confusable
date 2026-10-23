@@ -5,9 +5,9 @@ Unicode spoofing and confusable detection for Python, following
 no runtime dependencies.
 
 > **Status: pre-alpha.** Look-alike detection (`skeleton`, `match`), mixed-script
-> detection, restriction levels, the identifier checks and the mixed-number and
-> combining-mark checks work and pass their conformance tests; the other features
-> below are planned. Nothing is on PyPI yet.
+> detection, restriction levels, the identifier checks, the mixed-number and
+> combining-mark checks and invisible-character detection work and pass their
+> tests; graphemes and the compatibility module are planned. Nothing is on PyPI yet.
 
 ## Usage
 
@@ -48,6 +48,12 @@ confusable.is_allowed("pay pal")  # False: a space is Restricted
 confusable.is_allowed("\u0114")  # True: U+0114 is Restricted, E + U+0306 is not
 confusable.identifier_types("\u200d")  # {IdentifierType.DEFAULT_IGNORABLE}
 confusable.isxidstart("_"), confusable.isxidcontinue("_")  # (False, True)
+
+# Persian, Malayalam and Sinhala need ZERO WIDTH (NON-)JOINER in some words. The
+# profile excludes both; joining_controls=True allows them only where UTS #39
+# section 3.1.1.1 says they change how the word looks:
+confusable.is_allowed("\u0dc1\u0dca\u200d\u0dbb\u0dd3", joining_controls=True)  # True
+confusable.is_allowed("pay\u200dpal", joining_controls=True)  # False
 ```
 
 Three more checks from UTS #39 sections 5.3 and 5.4 catch digits from different
@@ -57,6 +63,18 @@ number systems and combining marks that pile up or hide:
 confusable.has_mixed_numbers("1\u0661")  # True: ASCII and Arabic-Indic digits
 confusable.has_unlikely_marks("e\u0301\u0301")  # True: the same accent twice
 confusable.has_hidden_overlay("i\u0307")  # True: a dot above, lost in i's own dot
+```
+
+Invisible and control characters, for text that is not held to the identifier
+profile, such as display names and file names:
+
+```python
+confusable.find_invisible("pay\u200bpal")  # [(3, Invisible.DEFAULT_IGNORABLE)]: ZWSP
+confusable.find_invisible("invoice\u202egpj.exe")  # [(7, Invisible.BIDI_CONTROL)]
+confusable.find_invisible("hi\U000e0068\U000e0069")  # two Invisible.TAG: hidden "hi"
+confusable.has_invisible(
+    "\U0001f468\u200d\U0001f469\u200d\U0001f467"
+)  # False: an emoji
 ```
 
 `skeleton(text, direction)` takes the paragraph direction text is shown in:

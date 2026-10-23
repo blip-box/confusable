@@ -457,6 +457,65 @@ def graphemes() -> str:
     )
 
 
+def joining() -> str:
+    """Build the properties the joining-control contexts of UTS #39 use."""
+    categories = _enumerated(fetch("ucd/IndicSyllabicCategory.txt"), "Other")
+    return _module(
+        "Properties for the joining-control contexts (UTS #39 section 3.1.1.1).",
+        [
+            *_emit_runs(
+                "JOINING_TYPE_RUNS",
+                _enumerated(
+                    fetch("ucd/extracted/DerivedJoiningType.txt"),
+                    "U",
+                    aliases=_aliases("jt"),
+                ),
+                "Joining_Type, by short value name (U is Non_Joining).",
+            ),
+            *_emit_ranges(
+                "VOWEL_DEPENDENT_RANGES",
+                [value == "Vowel_Dependent" for value in categories],
+                "Indic_Syllabic_Category=Vowel_Dependent.",
+            ),
+        ],
+    )
+
+
+def variation() -> str:
+    """Build the valid variation sequences and the characters they use."""
+    props = fetch("ucd/PropList.txt")
+    sequences = set()
+    for path in (
+        "ucd/StandardizedVariants.txt",
+        "ucd/emoji/emoji-variation-sequences.txt",
+    ):
+        with fetch(path).open(encoding="utf-8") as lines:
+            for line in lines:
+                if sequence := _fields(line)[0]:
+                    base, selector = (int(part, 16) for part in sequence.split())
+                    sequences.add((base, selector))
+    return _module(
+        "Variation sequences and the characters they are made of.",
+        [
+            *_emit_ranges(
+                "VARIATION_SELECTOR_RANGES",
+                _binary(props, "Variation_Selector"),
+                "Variation_Selector.",
+            ),
+            *_emit_ranges(
+                "UNIFIED_IDEOGRAPH_RANGES",
+                _binary(props, "Unified_Ideograph"),
+                "Unified_Ideograph: the bases of ideographic variation sequences.",
+            ),
+            "# Standardized variation sequences (StandardizedVariants.txt) and emoji",
+            "# variation sequences (emoji-variation-sequences.txt): (base, selector).",
+            "VARIATION_SEQUENCES: frozenset[tuple[int, int]] = frozenset({",
+            *(f"    (0x{base:04X}, 0x{vs:04X})," for base, vs in sorted(sequences)),
+            "})",
+        ],
+    )
+
+
 def emoji() -> str:
     """Build the valid emoji tag sequences, the one legitimate use of Tags."""
     sequences = []
@@ -484,9 +543,11 @@ TABLES: dict[str, Callable[[], str]] = {
     "emoji.py": emoji,
     "graphemes.py": graphemes,
     "identifiers.py": identifiers,
+    "joining.py": joining,
     "normalization.py": normalization,
     "properties.py": properties,
     "scripts.py": scripts,
+    "variation.py": variation,
 }
 
 
