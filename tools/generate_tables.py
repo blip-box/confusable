@@ -15,6 +15,7 @@ ranges of the code points that have them. confusable._lookup reads both.
 from __future__ import annotations
 
 import argparse
+import re
 from collections.abc import Callable, Iterable, Iterator, Sequence
 from functools import cache
 from pathlib import Path
@@ -516,6 +517,87 @@ def variation() -> str:
     )
 
 
+# confusable_homoglyphs 3.3.1 reads Scripts.txt with this pattern
+# (confusable_homoglyphs/cli.py): a range, its script and the General_Category
+# the comment gives, where "L&" reads as "L".
+_HOMOGLYPH_SCRIPT = re.compile(r"([0-9A-F]+)(?:\.\.([0-9A-F]+))?\W+(\w+)\s*#\s*(\w+)")
+# The names in a confusables.txt comment: "( X \u2192 Y ) NAME X \u2192 NAME Y\t#".
+_HOMOGLYPH_NAMES = re.compile("\\) ([^()\u2192]+) \u2192 ([^()\u2192]+)\t#")
+
+
+def homoglyphs() -> str:
+    """Build the data of confusable.compat.homoglyphs.
+
+    The scripts and categories follow confusable_homoglyphs exactly. The
+    confusable pairs come from the code point fields of confusables.txt, where
+    that package reads the characters from the comments, which wrap
+    right-to-left characters in LEFT-TO-RIGHT MARKs and show space-like
+    characters as blanks; the names come from the comments, as there.
+    """
+    aliases: list[str] = []
+    categories: list[str] = []
+    ranges = []
+    with fetch("ucd/Scripts.txt").open(encoding="utf-8") as lines:
+        for line in lines:
+            if found := _HOMOGLYPH_SCRIPT.findall(line):
+                first, last, alias, category = found[0]
+                alias = alias.upper()
+                if alias not in aliases:
+                    aliases.append(alias)
+                if category not in categories:
+                    categories.append(category)
+                ranges.append(
+                    (
+                        int(first, 16),
+                        int(last or first, 16),
+                        aliases.index(alias),
+                        categories.index(category),
+                    )
+                )
+    ranges.sort()
+    pairs = []
+    names: dict[str, str] = {}
+    with fetch("security/confusables.txt").open(encoding="utf-8") as lines:
+        for line in lines:
+            fields = _fields(line)
+            if not fields[0]:
+                continue
+            source, target = ([int(cp, 16) for cp in f.split()] for f in fields[:2])
+            match = _HOMOGLYPH_NAMES.search(line)
+            assert match is not None, line
+            for code_points, name in ((source, match[1]), (target, match[2])):
+                # One name per character, and the same one on every line.
+                assert len(name.split(", ")) == len(code_points), line
+                key = _string(code_points)
+                assert names.setdefault(key, name) == name, line
+            pairs.append((_string(source), _string(target)))
+    return _module(
+        "Data for confusable.compat.homoglyphs, as confusable_homoglyphs has it.",
+        [
+            "# Script names in capitals, in the order Scripts.txt first uses them.",
+            "ALIASES: tuple[str, ...] = (",
+            *(f'    "{alias}",' for alias in aliases),
+            ")",
+            "# General_Category values as Scripts.txt comments give them, L& as L.",
+            "CATEGORIES: tuple[str, ...] = (",
+            *(f'    "{category}",' for category in categories),
+            ")",
+            "# (first, last, alias index, category index), sorted.",
+            "SCRIPT_RANGES: tuple[tuple[int, int, int, int], ...] = (",
+            *(f"    (0x{a:04X}, 0x{b:04X}, {i}, {j})," for a, b, i, j in ranges),
+            ")",
+            "# The confusables.txt lines as (source, target), in file order.",
+            "PAIRS: tuple[tuple[str, str], ...] = (",
+            *(f"    ({source}, {target})," for source, target in pairs),
+            ")",
+            "# The name of each source and target, as the comments give it.",
+            "NAMES: dict[str, str] = {",
+            *(f'    {key}: "{name}",' for key, name in names.items()),
+            "}",
+        ],
+    )
+
+
 def emoji() -> str:
     """Build the valid emoji tag sequences, the one legitimate use of Tags."""
     sequences = []
@@ -542,6 +624,7 @@ TABLES: dict[str, Callable[[], str]] = {
     "confusables.py": confusables,
     "emoji.py": emoji,
     "graphemes.py": graphemes,
+    "homoglyphs.py": homoglyphs,
     "identifiers.py": identifiers,
     "joining.py": joining,
     "normalization.py": normalization,

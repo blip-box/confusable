@@ -7,11 +7,12 @@ fields separated by tabs, and "#" header lines that describe each file.
 from __future__ import annotations
 
 import gzip
+import json
 from collections.abc import Iterator
 from dataclasses import dataclass
 from functools import cache
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 FIXTURES = Path(__file__).parent / "fixtures"
 UNICODE_VERSION = "18.0.0"
@@ -308,3 +309,56 @@ def normalization_tests() -> tuple[NormalizationCase, ...]:
         c1, c2, c3, c4, c5 = (text(field) for field in line.split(";")[:5])
         cases.append(NormalizationCase(number, (c1, c2, c3, c4, c5)))
     return tuple(cases)
+
+
+@dataclass(frozen=True)
+class HomoglyphCase:
+    """What confusable_homoglyphs 3.3.1 returns for one string."""
+
+    text: str
+    unique_aliases: list[str]
+    # is_mixed_script with the default, [] and ["common", "latin"].
+    mixed: tuple[bool, bool, bool]
+    # is_dangerous with [] and ["latin"].
+    dangerous: tuple[bool, bool]
+    # is_confusable(greedy=True) with each of HOMOGLYPH_PREFERRED: False, or
+    # [character, alias, number of homoglyphs] for each character found.
+    confusable: list[Any]
+
+
+HOMOGLYPH_ALLOWED: tuple[list[str] | None, ...] = (None, [], ["common", "latin"])
+HOMOGLYPH_DANGEROUS: tuple[list[str], ...] = ([], ["latin"])
+HOMOGLYPH_PREFERRED: tuple[list[str], ...] = (
+    [],
+    ["latin"],
+    ["greek"],
+    ["latin", "common"],
+    ["cyrillic"],
+)
+
+
+@cache
+def homoglyph_cases() -> tuple[HomoglyphCase, ...]:
+    cases = []
+    for _, line in _gzip_lines("homoglyphs.txt.gz"):
+        if line.startswith("#"):
+            continue
+        source, aliases, mixed, dangerous, confusable = line.split("\t")
+        cases.append(
+            HomoglyphCase(
+                text=text(source),
+                unique_aliases=aliases.split(),
+                mixed=(mixed[0] == "T", mixed[1] == "T", mixed[2] == "T"),
+                dangerous=(dangerous[0] == "T", dangerous[1] == "T"),
+                confusable=json.loads(confusable),
+            )
+        )
+    return tuple(cases)
+
+
+@cache
+def homoglyph_data() -> dict[str, Any]:
+    """The data files confusable_homoglyphs' own generator makes, as made."""
+    with gzip.open(FIXTURES / "homoglyphs-data.json.gz", "rt", encoding="utf-8") as f:
+        data: dict[str, Any] = json.load(f)
+    return data

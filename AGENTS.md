@@ -26,8 +26,9 @@ and grapheme clusters (`iter_graphemes()`, `Segment`, `truncate()`), all passing
 their conformance tests; and the joining-control contexts of section 3.1.1.1
 (`is_allowed(text, joining_controls=True)`) and invisible and control characters
 (`find_invisible()`, `has_invisible()`, `Invisible`), which no oracle implements.
-The core API is complete: no conformance test is an xfail. The compat module is
-next.
+The core API is complete: no conformance test is an xfail. So is
+`confusable.compat.homoglyphs`, which is checked against confusable_homoglyphs
+3.3.1 itself. The first alpha on PyPI is next.
 
 ## Decisions
 
@@ -50,6 +51,7 @@ next.
 | Numbers and marks | `has_mixed_numbers` is section 5.3. `has_unlikely_marks` is both of section 5.4's mark rules: a run of nonspacing marks (gc=Mn or Me) that repeats a mark, as ICU's INVISIBLE check finds, or has more than four, which ICU does not check. `has_hidden_overlay` is ICU's HIDDEN_OVERLAY, the only implementation of the 5.4 overlay rule. The mark checks test the NFD form, as Unicode conformance clause C6 asks; ICU tests overlays as written, so NFC text slipped through, and ICU patch 0007 makes the oracle use NFD. A consequence: U+0130, whose NFD is I and a dot above, is a hidden overlay, because I's prototype is l. |
 | Invisible characters | `find_invisible(text)` returns `(index, Invisible)` pairs for every Default_Ignorable_Code_Point and C0 or C1 control, except where the context gives the character a visible job: ZWJ and ZWNJ in the section 3.1.1.1 contexts, ZWJ joining two emoji (UAX #29 rule GB11, so emoji ZWJ sequences that are not RGI pass too; they hide nothing, and skeletons ignore ZWJ), Tag characters inside an RGI emoji tag sequence only (other subdivision flags show as a black flag with hidden text), and one variation selector completing a standardized or emoji variation sequence, or an ideographic variation sequence as UTS #37 defines it (VS17 to VS256 after a unified ideograph; the Ideographic Variation Database is not pinned, so registration is not checked). Contexts are judged on the NFC form: candidates are never changed or moved by normalization, so the n-th candidate of the NFC form is the n-th of the text. `tests/test_invisible.py` checks every RGI emoji sequence, from the `emoji-sequences.txt` fixture. |
 | Graphemes | `iter_graphemes(text, start=0, end=sys.maxsize, /)` behaves like Python 3.15's `unicodedata.iter_graphemes`: it segments `text[start:end]`, with slice semantics, as a string of its own, and yields immutable `Segment`s with `start`, `end` and `str()`. It follows UAX #29 revision 49 (Unicode 18) on every Python, including its new rule GB9c, `Linker Extend* x Consonant`, so on Python 3.15 (Unicode 17) the two differ for text with an Indic linker and for characters whose properties changed; `tests/test_graphemes.py` compares them everywhere else. `truncate(text, max_graphemes, *, max_code_points, max_utf8_bytes, max_utf16_units)` keeps whole clusters within every given limit, because UAX #29 section 3 notes that a grapheme count does not bound data size. |
+| Compat module | `confusable.compat.homoglyphs` has the modules `categories` and `confusables` of confusable_homoglyphs 3.3.1, with its functions, signatures, results and lazily built `categories_data` and `confusables_data`. Its data is rebuilt from the pinned Unicode files by that package's own rules, except that the confusable pairs come from the code point fields of confusables.txt: the package's generator reads them from the comments, which wrap right-to-left characters in LEFT-TO-RIGHT MARKs (so its data misses every Arabic and Hebrew look-alike) and show four space-like characters, HANGUL FILLER among them, as blanks it cannot parse. Results hold fresh lists. No command line and no CONFUSABLE_DATA. The oracle is the real package, installed by hash into `tools/oracles/homoglyphs/.build/`. |
 | v1 scope | `skeleton()`, a two-string comparison (do not call it `is_confusable()` on a module named `confusable`), restriction levels, mixed-script detection, identifier status and type, invisible and control characters, UAX #31 `isxidstart`/`isxidcontinue` equivalents, grapheme iteration and safe truncation, and the compat module. |
 | Out of scope | Transliteration (use `anyascii`), generating confusable variants. |
 
@@ -102,8 +104,8 @@ CI's `generated` job runs both checks.
 - `src/confusable/_normalize.py`: NFD and NFC on the generated tables.
 - `src/confusable/_lookup.py`: lookups in the generated runs and ranges.
 - `src/confusable/_data/`: generated Unicode tables, one module per area (bidi,
-  confusables, emoji, graphemes, identifiers, joining, normalization, properties,
-  scripts, variation). Never edit them by hand; ruff skips them.
+  confusables, emoji, graphemes, homoglyphs, identifiers, joining, normalization,
+  properties, scripts, variation). Never edit them by hand; ruff skips them.
 - `tools/generate_tables.py`: writes `src/confusable/_data/` from the pinned sources.
 - `tools/unicode_release.py`: notices new Unicode releases and re-pins the sources.
 - `tests/`: pytest and hypothesis.
@@ -112,7 +114,9 @@ CI's `generated` job runs both checks.
   the fixtures, and `adapter.py` maps each operation the specifications define to
   the library.
 - `tools/unicode_sources.py`: the pinned Unicode source files, by SHA-256.
-- `tools/oracles/`: the ICU and Rust oracles and the fixture generator.
+- `src/confusable/compat/homoglyphs/`: the confusable_homoglyphs 3.3.1 API.
+- `tools/oracles/`: the ICU, Rust and confusable_homoglyphs oracles and the fixture
+  generator.
 - `LICENSES/Unicode-3.0.txt`: the license of the Unicode data the fixtures and
   tables derive from.
 - `.github/workflows/ci.yml`: a `lint` job, the `test` matrix, a `generated` job that
@@ -136,8 +140,9 @@ CI's `generated` job runs both checks.
 
 - A missed look-alike is a security bug. The test suite is the product.
 - Build the conformance harness before the public API. Oracles are ICU's SpoofChecker
-  and the Rust `unicode-security` crate. Commit their outputs as fixtures so ordinary
-  test runs need no ICU, Rust or network.
+  and the Rust `unicode-security` crate, and confusable_homoglyphs 3.3.1 for the
+  compat module. Commit their outputs as fixtures so ordinary test runs need no
+  ICU, Rust or network.
 - Follow UTS #39 exactly. Where the library deviates, explain why in a comment next to
   the code and pin the behaviour with a test.
 - Never edit generated tables or fixtures by hand. Change the generator, the corpus
@@ -220,13 +225,11 @@ its hash pins it.
 
 Each item is its own pull request:
 
-1. `confusable.compat.homoglyphs`, with differential tests against
-   `confusable_homoglyphs` 3.3.1.
-2. First alpha on PyPI via trusted publishing.
+1. First alpha on PyPI via trusted publishing.
 
-The core API is done: skeletons and `match`, mixed scripts and restriction
-levels, identifiers, joining controls, invisible characters, the section 5.3
-and 5.4 checks, and graphemes.
+Done: skeletons and `match`, mixed scripts and restriction levels,
+identifiers, joining controls, invisible characters, the section 5.3 and 5.4
+checks, graphemes, and `confusable.compat.homoglyphs`.
 
 ## References
 

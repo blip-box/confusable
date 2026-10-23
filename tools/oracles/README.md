@@ -2,7 +2,8 @@
 
 The conformance fixtures in `tests/conformance/fixtures/` come from two
 independent implementations of UTS #39, run over every code point and over a
-corpus of strings. Ordinary test runs only read the committed fixtures; nothing
+corpus of strings, and from confusable_homoglyphs 3.3.1, the package
+`confusable.compat.homoglyphs` replaces. Ordinary test runs only read the committed fixtures; nothing
 here runs unless you regenerate them.
 
 ## Regenerating
@@ -14,7 +15,7 @@ uv run --no-project --python 3.14 python -m tools.oracles.generate --check
 
 The first command rewrites the fixtures. The second compares a fresh run with
 the committed ones, which is what the `generated` job in CI does. Both need Python
-3.12 or later, a C++17 compiler, `cargo`, `curl` and `patch`. The first run
+3.12 or later, a C++17 compiler, `cargo`, `curl`, `patch` and `uv`. The first run
 builds ICU from source, which takes a minute or a few; later runs reuse it.
 
 Every download is pinned: the Unicode files by SHA-256 and version header
@@ -60,6 +61,19 @@ unicode-normalization regenerated for Unicode 18 by `rust_regen.py`.
 `agreement.py` compares it with ICU. Every difference must fall under a named
 rule tied to a point of the spec, or generation fails; `agreement.txt` in the
 fixtures records the counts.
+
+**confusable_homoglyphs 3.3.1** (for the compat module). `generate.py`
+installs it and click, which its data generator imports, by hash from
+`homoglyphs/requirements.txt` into `homoglyphs/.build/`, with `uv`.
+`homoglyphs/oracle.py` then runs the package's own generator on the pinned
+Unicode files, with no network access, and writes its output to
+`homoglyphs-data.json.gz` as it is. The generator reads characters from the
+comments of `confusables.txt`, so it keeps the LEFT-TO-RIGHT MARKs those put
+around right-to-left characters and drops four lines whose characters show as
+blanks; `tests/test_homoglyphs.py` checks that confusable's data differs from
+this output by exactly those two bugs. The oracle then runs the package's
+functions over the corpus on corrected data, built from the code point fields,
+and `homoglyphs.txt.gz` holds the results.
 
 Besides the oracles, the fixtures carry Unicode's own conformance tests:
 `GraphemeBreakTest.txt`, and `BidiTest.txt`, `BidiCharacterTest.txt` and

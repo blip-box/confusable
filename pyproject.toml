@@ -85,7 +85,7 @@ strict = true
 warn_unreachable = true
 files = ["src", "tests", "tools"]
 # Oracle build output, including the vendored crates' Python generators.
-exclude = ['^tools/oracles/rust/(vendor|target)/', '^tools/oracles/icu/\.build/', '^tools/\.cache/']
+exclude = ['^tools/oracles/rust/(vendor|target)/', '^tools/oracles/icu/\.build/', '^tools/oracles/homoglyphs/\.build/', '^tools/\.cache/']
 
 [tool.ruff]
 line-length = 88

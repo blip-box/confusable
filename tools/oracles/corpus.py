@@ -331,6 +331,28 @@ def _unique(items: Iterable[str]) -> list[str]:
     return out
 
 
+# Extra strings for the confusable_homoglyphs oracle: its own docstring
+# examples, and right-to-left look-alikes, which its shipped data misses.
+HOMOGLYPH_EXAMPLES = (
+    "Ab\u00e7",
+    "\u03c1\u03c4.\u03c4",
+    "Allo\u03c4",
+    "pa\u03c1a",
+    "Allo\u0393",
+    "\u03c1\u03c4\u03c4",
+    "\u03c1\u03c4\u03c4p",
+    "Allo",
+    "Allo\u03c1",
+    "AlaskaJazz",
+    "\u0391laskaJazz",
+    "g\u0647",  # ARABIC LETTER HEH, like o
+    "g\u05e1gle",  # HEBREW LETTER SAMEKH, like o
+    "l\u05d5l",  # HEBREW LETTER VAV, like l
+    "\u0627\u0661",  # ARABIC LETTER ALEF and ARABIC-INDIC DIGIT ONE
+    "name\u3164",  # HANGUL FILLER, which the shipped data lacks
+)
+
+
 def strings(pools: Pools) -> list[str]:
     """Curated attacks first, then generated strings, without duplicates."""
     rng = random.Random(SEED)

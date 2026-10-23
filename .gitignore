@@ -34,3 +34,4 @@ tools/.cache/
 tools/oracles/icu/.build/
 tools/oracles/rust/target/
 tools/oracles/rust/vendor/
+tools/oracles/homoglyphs/.build/
