@@ -35,21 +35,26 @@ def test_direction_must_be_known() -> None:
 def test_lone_surrogates_do_not_crash() -> None:
     # Python strings can hold them (surrogateescape, for example).
     assert skeleton("a\udcff") == skeleton("a\udcff")
-    assert match("a\udcff", "a\udcff")
+    # Latin with Unknown (Zzzz): mixed-script, even against itself.
+    assert match("a\udcff", "a\udcff") is Match.MIXED_SCRIPT
 
 
-def test_match_is_false_when_skeletons_differ() -> None:
-    result = match("paypal", "paypa1x")
-    assert not result
-    assert result == Match(0)
+def test_match_is_none_when_skeletons_differ() -> None:
+    assert match("paypal", "paypa1x") is None
 
 
 def test_match_uses_the_display_direction() -> None:
     # UTS #39 section 4: LTR-confusable, but not confusable without bidi.
     s1, s2 = "A1<\u05e9\u05c2", "\u0391\u05e9\u05ba>1"
-    assert match(s1, s2) == Match.MIXED_SCRIPT
-    assert not match(s1, s2, None)
-    assert not match(s1, s2, "rtl")
+    assert match(s1, s2) is Match.MIXED_SCRIPT
+    assert match(s1, s2, None) is None
+    assert match(s1, s2, "rtl") is None
+
+
+def test_whole_script_confusables_are_mixed_script() -> None:
+    assert Match.WHOLE_SCRIPT.mixed_script
+    assert Match.MIXED_SCRIPT.mixed_script
+    assert not Match.SINGLE_SCRIPT.mixed_script
 
 
 def test_public_names() -> None:
