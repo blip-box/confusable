@@ -28,6 +28,7 @@ from confusable._normalize import nfc
 
 ZWNJ = chr(0x200C)
 ZWJ = chr(0x200D)
+JOINERS = (ZWNJ, ZWJ)
 
 _JOINING_TYPE = Runs(_joining.JOINING_TYPE_RUNS)
 _VOWEL_DEPENDENT = Ranges(_joining.VOWEL_DEPENDENT_RANGES)
@@ -120,13 +121,13 @@ def joining_controls_in_context(text: str) -> list[bool]:
     if ZWNJ not in text and ZWJ not in text:
         return []
     composed = nfc(text)
-    out = []
-    for i, c in enumerate(composed):
-        if c == ZWNJ:
-            out.append(
-                _breaks_cursive_connection(composed, i)
-                or _non_joiner_in_conjunct(composed, i)
-            )
-        elif c == ZWJ:
-            out.append(_joiner_in_conjunct(composed, i))
-    return out
+    return [in_context(composed, i) for i, c in enumerate(composed) if c in JOINERS]
+
+
+def in_context(composed: str, i: int) -> bool:
+    """Whether the ZWNJ or ZWJ at i of NFC text is in an A1, A2 or B context."""
+    if composed[i] == ZWNJ:
+        return _breaks_cursive_connection(composed, i) or _non_joiner_in_conjunct(
+            composed, i
+        )
+    return _joiner_in_conjunct(composed, i)

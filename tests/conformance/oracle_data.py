@@ -171,6 +171,11 @@ def pairs() -> tuple[PairCase, ...]:
     return tuple(cases)
 
 
+def rgi_emoji_sequences() -> tuple[tuple[str, str], ...]:
+    """Every RGI emoji sequence and its type, from emoji-sequences.txt."""
+    return tuple((text(fields[0]), fields[1]) for fields in rows("emoji-sequences.txt"))
+
+
 @dataclass(frozen=True)
 class GraphemeCase:
     """One line of Unicode's GraphemeBreakTest.txt."""

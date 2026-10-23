@@ -147,6 +147,10 @@ SOURCES: dict[str, Source] = {
             "80d00f8e616a0ef27fd6b8de3b758c06383b5d917e2977709578e68baf733bf1",
         ),
         _versioned(
+            "ucd/emoji/emoji-variation-sequences.txt",
+            "ff1707564aa1f1b2fcf4ec92d609d4cb26940bc0d4dcf07f5328ad6879e84da3",
+        ),
+        _versioned(
             "emoji/emoji-sequences.txt",
             "1823dce71f3dd9cb0ad1976797baee4ffbdc1909756f43af8ce4c57f732843a4",
             EMOJI_VERSION,
