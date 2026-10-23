@@ -47,7 +47,6 @@ def show(value: str) -> str:
 # Skeletons and normalization.
 
 
-@not_implemented("skeleton")
 def test_skeleton_of_every_code_point() -> None:
     expected = oracle_data.skeletons()
     assert_all(
@@ -57,7 +56,6 @@ def test_skeleton_of_every_code_point() -> None:
     )
 
 
-@not_implemented("bidi_skeleton")
 def test_rtl_bidi_skeleton_of_every_code_point() -> None:
     skeletons, rtl = oracle_data.skeletons(), oracle_data.rtl_skeletons()
     assert_all(
@@ -77,7 +75,6 @@ def test_nfd_of_every_code_point() -> None:
     )
 
 
-@not_implemented("skeleton")
 def test_skeleton_of_corpus_strings() -> None:
     assert_all(
         f"{show(case.text)}: expected {show(case.skeleton)}, got {show(got)}"
@@ -86,7 +83,6 @@ def test_skeleton_of_corpus_strings() -> None:
     )
 
 
-@not_implemented("internal_skeleton")
 def test_internal_skeleton_of_corpus_strings() -> None:
     assert_all(
         f"{show(case.text)}: expected {show(case.internal_skeleton)}, got {show(got)}"
@@ -95,7 +91,6 @@ def test_internal_skeleton_of_corpus_strings() -> None:
     )
 
 
-@not_implemented("bidi_skeleton")
 def test_bidi_skeletons_of_corpus_strings() -> None:
     assert_all(
         f"{show(case.text)} {direction}: expected {show(want)}, got {show(got)}"
@@ -129,7 +124,6 @@ def test_unicode_normalization_tests() -> None:
 # Confusable classes.
 
 
-@not_implemented("confusable_classes")
 def test_confusable_classes_of_corpus_pairs() -> None:
     assert_all(
         f"{show(case.a)} / {show(case.b)} ({kind}): "
@@ -145,7 +139,6 @@ def test_confusable_classes_of_corpus_pairs() -> None:
 # Mixed scripts, restriction levels and the optional checks.
 
 
-@not_implemented("resolved_script_set")
 def test_resolved_script_sets() -> None:
     assert_all(
         f"{show(case.text)}: expected {case.resolved_script_set!r}, got {got!r}"
@@ -293,27 +286,23 @@ def test_property_of_every_code_point(name: str) -> None:
 # Properties the specifications guarantee for every input.
 
 
-@not_implemented("internal_skeleton")
 @given(st.text())
 def test_internal_skeleton_is_idempotent(text: str) -> None:
     once = adapter.internal_skeleton(text)
     assert adapter.internal_skeleton(once) == once
 
 
-@not_implemented("internal_skeleton")
 @given(st.text())
 def test_internal_skeleton_ignores_normalization(text: str) -> None:
     normalized = adapter.nfd(text)
     assert adapter.internal_skeleton(normalized) == adapter.internal_skeleton(text)
 
 
-@not_implemented("confusable_classes")
 @given(st.text(), st.text())
 def test_confusability_is_symmetric(a: str, b: str) -> None:
     assert adapter.confusable_classes(a, b) == adapter.confusable_classes(b, a)
 
 
-@not_implemented("confusable_classes")
 @given(st.text())
 def test_every_string_is_confusable_with_itself(text: str) -> None:
     assert adapter.confusable_classes(text, text)

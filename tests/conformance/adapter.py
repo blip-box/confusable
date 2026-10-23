@@ -16,13 +16,14 @@ from __future__ import annotations
 
 from typing import Literal
 
-from confusable import _bidi, _normalize
+import confusable
+from confusable import _bidi, _normalize, _scripts
 from confusable._data import bidi as _bidi_data
 from confusable._data import graphemes as _graphemes
 from confusable._data import identifiers as _identifiers
 from confusable._data import normalization as _normalization
 from confusable._data import properties as _properties
-from confusable._data import scripts as _scripts
+from confusable._data import scripts as _scripts_data
 from confusable._lookup import Ranges, Runs
 
 
@@ -32,17 +33,17 @@ class NotImplementedYetError(NotImplementedError):
 
 def skeleton(text: str) -> str:
     """UTS #39 skeleton(X), which is bidiSkeleton(LTR, X)."""
-    raise NotImplementedYetError("skeleton")
+    return confusable.skeleton(text)
 
 
 def internal_skeleton(text: str) -> str:
     """UTS #39 internalSkeleton(X): skeleton without the bidi steps."""
-    raise NotImplementedYetError("internal_skeleton")
+    return confusable.skeleton(text, None)
 
 
 def bidi_skeleton(text: str, direction: Literal["LTR", "RTL"]) -> str:
     """UTS #39 bidiSkeleton(direction, X)."""
-    raise NotImplementedYetError("bidi_skeleton")
+    return confusable.skeleton(text, "ltr" if direction == "LTR" else "rtl")
 
 
 def bidi_paragraph(
@@ -83,7 +84,8 @@ def resolved_script_set(text: str) -> str:
     Returned in fixture form: sorted ISO 15924 codes joined by spaces, "ALL"
     for the set of all scripts, or "" for the empty set.
     """
-    raise NotImplementedYetError("resolved_script_set")
+    resolved = _scripts.resolved_script_set(text)
+    return "ALL" if resolved is None else " ".join(sorted(resolved))
 
 
 def restriction_level(text: str) -> str:
@@ -104,7 +106,15 @@ def confusable_classes(
     A subset of {"SINGLE_SCRIPT", "MIXED_SCRIPT", "WHOLE_SCRIPT"}; empty when
     the two strings are not confusable.
     """
-    raise NotImplementedYetError("confusable_classes")
+    result = confusable.match(a, b, _MATCH_DIRECTION[skeleton])
+    return frozenset(kind.name or "" for kind in confusable.Match if kind in result)
+
+
+_MATCH_DIRECTION: dict[str, Literal["ltr", "rtl"] | None] = {
+    "skeleton": "ltr",
+    "internal": None,
+    "rtl": "rtl",
+}
 
 
 def outside_profile(text: str) -> bool:
@@ -132,8 +142,8 @@ def grapheme_boundaries(text: str) -> tuple[int, ...]:
     raise NotImplementedYetError("grapheme_boundaries")
 
 
-_SCRIPT = Runs(_scripts.SCRIPT_RUNS)
-_SCRIPT_EXTENSIONS = Runs(_scripts.SCRIPT_EXTENSIONS_RUNS)
+_SCRIPT = Runs(_scripts_data.SCRIPT_RUNS)
+_SCRIPT_EXTENSIONS = Runs(_scripts_data.SCRIPT_EXTENSIONS_RUNS)
 _ENUMERATED = {
     "Script": _SCRIPT,
     "General_Category": Runs(_properties.GENERAL_CATEGORY_RUNS),
