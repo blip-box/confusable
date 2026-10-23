@@ -390,7 +390,7 @@ def identifiers() -> str:
 
 
 def properties() -> str:
-    """Build general properties: categories, invisibles, controls, digits."""
+    """Build general properties: categories, invisibles, controls, dots, digits."""
     category = _general_category()
     core = fetch("ucd/DerivedCoreProperties.txt")
     props = fetch("ucd/PropList.txt")
@@ -418,6 +418,9 @@ def properties() -> str:
             ),
             *_emit_ranges(
                 "JOIN_CONTROL_RANGES", _binary(props, "Join_Control"), "Join_Control."
+            ),
+            *_emit_ranges(
+                "SOFT_DOTTED_RANGES", _binary(props, "Soft_Dotted"), "Soft_Dotted."
             ),
             "# The zero of each decimal digit system (General_Category=Nd): the",
             "# system's digits are the ten code points from its zero.",

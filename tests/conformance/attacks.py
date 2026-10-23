@@ -227,6 +227,28 @@ ATTACKS: tuple[Attack, ...] = (
     Attack("double-acute", "e\u0301\u0301", "the same nonspacing mark twice"),
     Attack("enclosing-mark-repeat", "a\u20dd\u20dd", "an enclosing mark (Me) twice"),
     Attack(
+        "repeat-apart",
+        "e\u0301\u0300\u0301",
+        "the same mark twice with another mark between them",
+    ),
+    Attack("dotless-i-dot", "\u0131\u0307", "dotless i with a dot above looks like i"),
+    Attack(
+        "cyrillic-i-overlay", "\u0456\u0307", "dot above on a Soft_Dotted Cyrillic i"
+    ),
+    Attack(
+        "capital-i-dot-above",
+        "\u0130",
+        "precomposed; its NFD is I and a dot above, and I's prototype is l",
+        "I\u0307",
+    ),
+    Attack(
+        "nfc-hidden-overlay",
+        "\u1e37\u0307",
+        "l with dot below, then a dot above: the NFC form of l + U+0323 + U+0307",
+        "l\u0323\u0307",
+    ),
+    Attack("dot-after-accent", "i\u0301\u0307", "an acute between i and the dot"),
+    Attack(
         "mark-reordering",
         "a\u0323\u0302",
         "dot below then circumflex, canonical order",

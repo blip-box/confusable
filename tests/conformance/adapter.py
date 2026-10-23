@@ -17,7 +17,7 @@ from __future__ import annotations
 from typing import Literal
 
 import confusable
-from confusable import _bidi, _normalize, _scripts
+from confusable import _bidi, _marks, _normalize, _numbers, _scripts
 from confusable._data import bidi as _bidi_data
 from confusable._data import graphemes as _graphemes
 from confusable._data import normalization as _normalization
@@ -133,17 +133,17 @@ def outside_profile(text: str) -> bool:
 
 def repeated_nonspacing_mark(text: str) -> bool:
     """UTS #39 section 5.4: the same nonspacing mark twice in one sequence."""
-    raise NotImplementedYetError("repeated_nonspacing_mark")
+    return _marks.has_repeated_mark(text)
 
 
 def hidden_overlay(text: str) -> bool:
     """UTS #39 section 5.4: a nonspacing mark hidden by its base character."""
-    raise NotImplementedYetError("hidden_overlay")
+    return confusable.has_hidden_overlay(text)
 
 
 def decimal_zeros(text: str) -> frozenset[str]:
     """UTS #39 section 5.3: the zero digit of each decimal system in the text."""
-    raise NotImplementedYetError("decimal_zeros")
+    return _numbers.decimal_zeros(text)
 
 
 def grapheme_boundaries(text: str) -> tuple[int, ...]:
