@@ -5,9 +5,9 @@ Unicode spoofing and confusable detection for Python, following
 no runtime dependencies.
 
 > **Status: pre-alpha.** Look-alike detection (`skeleton`, `match`), mixed-script
-> detection, restriction levels, the identifier checks and the mixed-number and
-> combining-mark checks work and pass their conformance tests; the other features
-> below are planned. Nothing is on PyPI yet.
+> detection, restriction levels, the identifier checks, the mixed-number and
+> combining-mark checks and invisible-character detection work and pass their
+> tests; graphemes and the compatibility module are planned. Nothing is on PyPI yet.
 
 ## Usage
 
@@ -63,6 +63,18 @@ number systems and combining marks that pile up or hide:
 confusable.has_mixed_numbers("1\u0661")  # True: ASCII and Arabic-Indic digits
 confusable.has_unlikely_marks("e\u0301\u0301")  # True: the same accent twice
 confusable.has_hidden_overlay("i\u0307")  # True: a dot above, lost in i's own dot
+```
+
+Invisible and control characters, for text that is not held to the identifier
+profile, such as display names and file names:
+
+```python
+confusable.find_invisible("pay\u200bpal")  # [(3, Invisible.DEFAULT_IGNORABLE)]: ZWSP
+confusable.find_invisible("invoice\u202egpj.exe")  # [(7, Invisible.BIDI_CONTROL)]
+confusable.find_invisible("hi\U000e0068\U000e0069")  # two Invisible.TAG: hidden "hi"
+confusable.has_invisible(
+    "\U0001f468\u200d\U0001f469\u200d\U0001f467"
+)  # False: an emoji
 ```
 
 `skeleton(text, direction)` takes the paragraph direction text is shown in:

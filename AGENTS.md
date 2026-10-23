@@ -23,9 +23,10 @@ identifier checks (`is_allowed()`, `identifier_status()`, `identifier_types()`,
 `isxidstart()`, `isxidcontinue()`), NFC, and the mixed-number and combining-mark
 checks (`has_mixed_numbers()`, `has_unlikely_marks()`, `has_hidden_overlay()`),
 all passing their conformance tests, and the joining-control contexts of
-section 3.1.1.1 (`is_allowed(text, joining_controls=True)`), which no oracle
-implements. Invisible characters and graphemes are not written yet; the grapheme
-conformance tests are strict xfails.
+section 3.1.1.1 (`is_allowed(text, joining_controls=True)`) and invisible and
+control characters (`find_invisible()`, `has_invisible()`, `Invisible`), which no
+oracle implements. Graphemes are not written yet; their conformance tests are
+strict xfails.
 
 ## Decisions
 
@@ -45,6 +46,7 @@ conformance tests are strict xfails.
 | Identifier profile | The General Security Profile (Identifier_Status=Allowed) under canonical equivalence, as UTS #39 section 3.1 says: each normalization segment passes if it is all Allowed in its NFD or its NFC form, so the answer does not depend on how the text is encoded. ICU and Rust test the characters as written; ICU patch 0006 makes the oracle follow the spec. `restriction_level` step 1 uses the same test. |
 | Joining controls | ZWJ and ZWNJ are outside the General Security Profile, as in UTS #39, ICU and Rust. `is_allowed` and `restriction_level` take `joining_controls=True` to allow them in the contexts A1, A2 and B of section 3.1.1.1 only, tested on the NFC form with "single script" meaning a non-empty resolved script set (section 5.1). UTS #39 calls this a modification of the profile, so it is opt-in. No oracle implements the contexts: `tests/test_joining.py` checks the spec's figures, invariance under normalization, and that the contexts are narrower than IDNA2008's CONTEXTJ, as the spec says, except where a mark sits between the virama and the joining control, which A2 and B allow and CONTEXTJ does not. |
 | Numbers and marks | `has_mixed_numbers` is section 5.3. `has_unlikely_marks` is both of section 5.4's mark rules: a run of nonspacing marks (gc=Mn or Me) that repeats a mark, as ICU's INVISIBLE check finds, or has more than four, which ICU does not check. `has_hidden_overlay` is ICU's HIDDEN_OVERLAY, the only implementation of the 5.4 overlay rule. The mark checks test the NFD form, as Unicode conformance clause C6 asks; ICU tests overlays as written, so NFC text slipped through, and ICU patch 0007 makes the oracle use NFD. A consequence: U+0130, whose NFD is I and a dot above, is a hidden overlay, because I's prototype is l. |
+| Invisible characters | `find_invisible(text)` returns `(index, Invisible)` pairs for every Default_Ignorable_Code_Point and C0 or C1 control, except where the context gives the character a visible job: ZWJ and ZWNJ in the section 3.1.1.1 contexts, ZWJ joining two emoji (UAX #29 rule GB11, so emoji ZWJ sequences that are not RGI pass too; they hide nothing, and skeletons ignore ZWJ), Tag characters inside an RGI emoji tag sequence only (other subdivision flags show as a black flag with hidden text), and one variation selector completing a standardized or emoji variation sequence, or an ideographic variation sequence as UTS #37 defines it (VS17 to VS256 after a unified ideograph; the Ideographic Variation Database is not pinned, so registration is not checked). Contexts are judged on the NFC form: candidates are never changed or moved by normalization, so the n-th candidate of the NFC form is the n-th of the text. `tests/test_invisible.py` checks every RGI emoji sequence, from the `emoji-sequences.txt` fixture. |
 | v1 scope | `skeleton()`, a two-string comparison (do not call it `is_confusable()` on a module named `confusable`), restriction levels, mixed-script detection, identifier status and type, invisible and control characters, UAX #31 `isxidstart`/`isxidcontinue` equivalents, grapheme iteration and safe truncation, and the compat module. |
 | Out of scope | Transliteration (use `anyascii`), generating confusable variants. |
 
@@ -90,12 +92,13 @@ CI's `generated` job runs both checks.
 - `src/confusable/_identifiers.py`: the General Security Profile, Identifier_Status
   and Identifier_Type, XID_Start and XID_Continue.
 - `src/confusable/_joining.py`: the joining-control contexts (section 3.1.1.1).
+- `src/confusable/_invisible.py`: `find_invisible`, `has_invisible` and `Invisible`.
 - `src/confusable/_bidi.py`: the Unicode Bidirectional Algorithm, for bidiSkeleton.
 - `src/confusable/_normalize.py`: NFD and NFC on the generated tables.
 - `src/confusable/_lookup.py`: lookups in the generated runs and ranges.
 - `src/confusable/_data/`: generated Unicode tables, one module per area (bidi,
   confusables, emoji, graphemes, identifiers, joining, normalization, properties,
-  scripts). Never edit them by hand; ruff skips them.
+  scripts, variation). Never edit them by hand; ruff skips them.
 - `tools/generate_tables.py`: writes `src/confusable/_data/` from the pinned sources.
 - `tools/unicode_release.py`: notices new Unicode releases and re-pins the sources.
 - `tests/`: pytest and hypothesis.
@@ -193,7 +196,8 @@ and listed with their hashes in `tools/unicode_sources.py`:
   `BidiBrackets.txt`, `BidiMirroring.txt`, `BidiTest.txt`, `BidiCharacterTest.txt`,
   `extracted/DerivedBidiClass.txt`, `extracted/DerivedJoiningType.txt`,
   `IndicSyllabicCategory.txt`, `auxiliary/GraphemeBreakProperty.txt`,
-  `auxiliary/GraphemeBreakTest.txt`, `emoji/emoji-data.txt`
+  `auxiliary/GraphemeBreakTest.txt`, `emoji/emoji-data.txt`,
+  `emoji/emoji-variation-sequences.txt`
 - `emoji/`: `emoji-sequences.txt` (valid tag sequences), `emoji-zwj-sequences.txt`
 
 Some files give defaults for unassigned code points in `# @missing:` lines rather
@@ -212,9 +216,9 @@ its hash pins it.
 Each item is its own pull request:
 
 1. Core API, one PR per module where sensible, each wiring its operations into
-   `tests/conformance/adapter.py`: invisible characters, then graphemes.
-   Skeletons, `match`, mixed scripts, restriction levels, identifiers, joining
-   controls and the section 5.3 and 5.4 checks are done.
+   `tests/conformance/adapter.py`: graphemes. Skeletons, `match`, mixed scripts,
+   restriction levels, identifiers, joining controls, invisible characters and
+   the section 5.3 and 5.4 checks are done.
 2. `confusable.compat.homoglyphs`, with differential tests against
    `confusable_homoglyphs` 3.3.1.
 3. First alpha on PyPI via trusted publishing.

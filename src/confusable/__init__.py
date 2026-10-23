@@ -10,6 +10,7 @@ from confusable._identifiers import (
     isxidcontinue,
     isxidstart,
 )
+from confusable._invisible import Invisible, find_invisible, has_invisible
 from confusable._marks import has_hidden_overlay, has_unlikely_marks
 from confusable._numbers import has_mixed_numbers
 from confusable._restriction import RestrictionLevel, is_mixed_script, restriction_level
@@ -25,10 +26,13 @@ unicode_version = _data.UNICODE_VERSION
 __all__ = [
     "IdentifierStatus",
     "IdentifierType",
+    "Invisible",
     "Match",
     "RestrictionLevel",
     "__version__",
+    "find_invisible",
     "has_hidden_overlay",
+    "has_invisible",
     "has_mixed_numbers",
     "has_unlikely_marks",
     "identifier_status",
