@@ -14,9 +14,9 @@ no runtime dependencies.
 import confusable
 
 confusable.skeleton("p\u0430ypal")  # 'paypal' (with CYRILLIC SMALL LETTER A)
-confusable.match("paypal", "p\u0430ypal")  # Match.MIXED_SCRIPT, which is true
+confusable.match("paypal", "p\u0430ypal")  # Match.MIXED_SCRIPT
 confusable.match("rn", "m")  # Match.SINGLE_SCRIPT
-confusable.match("paypal", "paypa1x")  # Match(0), which is false
+confusable.match("paypal", "paypa1x")  # None: not confusable
 
 # The skeleton follows display order, so a right-to-left override is seen
 # the way a reader sees it:

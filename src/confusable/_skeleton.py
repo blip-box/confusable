@@ -84,47 +84,52 @@ def skeleton(text: str, direction: Direction | None = "ltr") -> str:
     return _internal_skeleton(_bidi.display(text, _BIDI_DIRECTION[direction]))
 
 
-class Match(enum.Flag):
-    """How two strings are confusable, per UTS #39 section 4.
+class Match(enum.Enum):
+    """How two confusable strings are confusable, per UTS #39 section 4.
 
-    Every confusable pair is either SINGLE_SCRIPT or MIXED_SCRIPT; a
-    WHOLE_SCRIPT pair is also MIXED_SCRIPT. An empty Match (``Match(0)``) is
-    false: the strings are not confusable.
+    match() returns one of these, or None for strings that are not confusable.
+    The values are exclusive. A whole-script confusable is also a mixed-script
+    confusable in UTS #39 terms, so to catch both, test ``result.mixed_script``
+    rather than ``result is Match.MIXED_SCRIPT``.
     """
 
-    SINGLE_SCRIPT = enum.auto()
+    SINGLE_SCRIPT = "single-script"
     """The strings' resolved script sets share a script, as "rn" and "m" do."""
 
-    MIXED_SCRIPT = enum.auto()
-    """The resolved script sets share no script."""
+    MIXED_SCRIPT = "mixed-script"
+    """The resolved script sets share no script, and a string is mixed-script."""
 
-    WHOLE_SCRIPT = enum.auto()
-    """Mixed-script, and each string is single-script on its own."""
+    WHOLE_SCRIPT = "whole-script"
+    """The resolved script sets share no script, and each is single-script."""
+
+    @property
+    def mixed_script(self) -> bool:
+        """Whether this is a mixed-script confusable, whole-script included."""
+        return self is not Match.SINGLE_SCRIPT
 
 
-def match(a: str, b: str, direction: Direction | None = "ltr") -> Match:
-    r"""Return how a and b are confusable: an empty, false Match if they are not.
+def match(a: str, b: str, direction: Direction | None = "ltr") -> Match | None:
+    r"""Return how a and b are confusable, or None if they are not.
 
     a and b are confusable when their skeletons, for the given display
-    direction (see skeleton), are equal. The result also says which class of
+    direction (see skeleton), are equal. The result says which kind of
     confusable they are, from their resolved script sets.
 
-    >>> match("paypal", "p\u0430ypal") == Match.MIXED_SCRIPT  # CYRILLIC A
-    True
-    >>> cyrillic_scope = "\u0455\u0441\u043e\u0440\u0435"
-    >>> Match.WHOLE_SCRIPT in match("scope", cyrillic_scope)
-    True
-    >>> match("rn", "m") == Match.SINGLE_SCRIPT
-    True
-    >>> bool(match("paypal", "payqal"))
-    False
+    >>> match("paypal", "p\u0430ypal")  # with CYRILLIC SMALL LETTER A
+    <Match.MIXED_SCRIPT: 'mixed-script'>
+    >>> match("scope", "\u0455\u0441\u043e\u0440\u0435")  # all Cyrillic
+    <Match.WHOLE_SCRIPT: 'whole-script'>
+    >>> match("rn", "m")
+    <Match.SINGLE_SCRIPT: 'single-script'>
+    >>> print(match("paypal", "payqal"))
+    None
     """
     if skeleton(a, direction) != skeleton(b, direction):
-        return Match(0)
+        return None
     scripts_a = _scripts.resolved_script_set(a)
     scripts_b = _scripts.resolved_script_set(b)
     if _scripts.intersects(scripts_a, scripts_b):
         return Match.SINGLE_SCRIPT
     if scripts_a != frozenset() and scripts_b != frozenset():
-        return Match.MIXED_SCRIPT | Match.WHOLE_SCRIPT
+        return Match.WHOLE_SCRIPT
     return Match.MIXED_SCRIPT

@@ -107,7 +107,12 @@ def confusable_classes(
     the two strings are not confusable.
     """
     result = confusable.match(a, b, _MATCH_DIRECTION[skeleton])
-    return frozenset(kind.name or "" for kind in confusable.Match if kind in result)
+    if result is None:
+        return frozenset()
+    # UTS #39 counts every whole-script confusable as mixed-script too.
+    if result is confusable.Match.WHOLE_SCRIPT:
+        return frozenset({"MIXED_SCRIPT", "WHOLE_SCRIPT"})
+    return frozenset({result.name})
 
 
 _MATCH_DIRECTION: dict[str, Literal["ltr", "rtl"] | None] = {
