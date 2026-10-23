@@ -8,7 +8,9 @@ from hypothesis import assume, given
 from hypothesis import strategies as st
 
 from confusable import Segment, iter_graphemes, truncate
-from confusable._graphemes import _BREAK, _CONJUNCT, _PICTOGRAPHIC
+from confusable._graphemes import _properties
+
+BREAK, CONJUNCT, PICTOGRAPHIC = _properties()
 
 FAMILY = "\U0001f468\u200d\U0001f469\u200d\U0001f467"  # one cluster
 FLAG_US = "\U0001f1fa\U0001f1f8"
@@ -99,9 +101,9 @@ def _same_properties(c: str) -> bool:
     """Whether c has the same grapheme properties in Python's Unicode data."""
     cp = ord(c)
     return bool(
-        unicodedata.grapheme_cluster_break(c) == _BREAK[cp]  # type: ignore[attr-defined]
-        and unicodedata.indic_conjunct_break(c) == _CONJUNCT[cp]  # type: ignore[attr-defined]
-        and unicodedata.extended_pictographic(c) == (cp in _PICTOGRAPHIC)  # type: ignore[attr-defined]
+        unicodedata.grapheme_cluster_break(c) == BREAK[cp]  # type: ignore[attr-defined]
+        and unicodedata.indic_conjunct_break(c) == CONJUNCT[cp]  # type: ignore[attr-defined]
+        and unicodedata.extended_pictographic(c) == (cp in PICTOGRAPHIC)  # type: ignore[attr-defined]
     )
 
 
@@ -122,7 +124,7 @@ def test_same_as_python_where_the_unicode_versions_agree(text: str) -> None:
     # Python 3.15 implements Unicode 17, which segments text the same way
     # except for the new GB9c and characters whose properties changed.
     assume(all(_same_properties(c) for c in text))
-    assume(all(_CONJUNCT[ord(c)] != "Linker" for c in text))
+    assume(all(CONJUNCT[ord(c)] != "Linker" for c in text))
     python = [(g.start, g.end) for g in unicodedata.iter_graphemes(text)]  # type: ignore[attr-defined]
     assert [(g.start, g.end) for g in iter_graphemes(text)] == python
 

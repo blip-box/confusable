@@ -4,23 +4,33 @@ A grapheme cluster is what a reader takes for one character: a letter with
 its accents, a Hangul syllable written in jamo, an emoji with its skin tone
 or a whole emoji ZWJ sequence, a flag. Cutting text inside one changes what
 it says, so truncation here only cuts between them.
+
+The tables load on first use, so that importing the package stays fast.
 """
 
 from __future__ import annotations
 
 import sys
 from collections.abc import Iterator
+from functools import cache
 
-from confusable._data import graphemes as _data
 from confusable._lookup import Ranges, Runs
-
-_BREAK = Runs(_data.GRAPHEME_CLUSTER_BREAK_RUNS)
-_CONJUNCT = Runs(_data.INDIC_CONJUNCT_BREAK_RUNS)
-_PICTOGRAPHIC = Ranges(_data.EXTENDED_PICTOGRAPHIC_RANGES)
 
 _CONTROLS = frozenset({"CR", "LF", "Control"})
 _HANGUL_AFTER_L = frozenset({"L", "V", "LV", "LVT"})
 _JOINS_BEFORE = frozenset({"Extend", "ZWJ", "SpacingMark"})  # GB9, GB9a
+
+
+@cache
+def _properties() -> tuple[Runs, Runs, Ranges]:
+    """Return Grapheme_Cluster_Break, Indic_Conjunct_Break, Extended_Pictographic."""
+    from confusable._data import graphemes
+
+    return (
+        Runs(graphemes.GRAPHEME_CLUSTER_BREAK_RUNS),
+        Runs(graphemes.INDIC_CONJUNCT_BREAK_RUNS),
+        Ranges(graphemes.EXTENDED_PICTOGRAPHIC_RANGES),
+    )
 
 
 class Segment:
@@ -67,19 +77,20 @@ def _boundaries(text: str, start: int, end: int) -> Iterator[int]:
                 yield i
         yield end
         return
+    breaks, conjuncts, pictographic_ranges = _properties()
     c = text[start]
-    before = _BREAK[ord(c)]
+    before = breaks[ord(c)]
     # State for the rules that look further back than one character.
     odd_regional_indicators = before == "Regional_Indicator"  # GB12, GB13
-    after_linker = _CONJUNCT[ord(c)] == "Linker"  # GB9c: Linker Extend*
-    after_pictographic = ord(c) in _PICTOGRAPHIC  # GB11: ExtPict Extend*
+    after_linker = conjuncts[ord(c)] == "Linker"  # GB9c: Linker Extend*
+    after_pictographic = ord(c) in pictographic_ranges  # GB11: ExtPict Extend*
     after_emoji_zwj = False  # GB11: ExtPict Extend* ZWJ
     for i in range(start + 1, end):
         c = text[i]
         cp = ord(c)
-        current = _BREAK[cp]
-        conjunct = _CONJUNCT[cp]
-        pictographic = cp in _PICTOGRAPHIC
+        current = breaks[cp]
+        conjunct = conjuncts[cp]
+        pictographic = cp in pictographic_ranges
         if before == "CR" and current == "LF":  # GB3
             joined = True
         elif before in _CONTROLS or current in _CONTROLS:  # GB4, GB5
