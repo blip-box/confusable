@@ -1,6 +1,8 @@
 # Enables auto-merge on Dependabot pull requests that are not semver-major.
 # The merge still waits for the required checks on main. Major updates are
-# left for a human to review.
+# left for a human to review, and so is any update to Anthropic or Claude
+# tooling: a new version of the agent harness changes how the maintenance
+# agents behave, so it must pass their evaluation drills first.
 name: Dependabot auto-merge
 
 on:
@@ -28,7 +30,10 @@ jobs:
       - id: metadata
         uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
       - name: Enable auto-merge
-        if: steps.metadata.outputs.update-type != 'version-update:semver-major'
+        if: >-
+          steps.metadata.outputs.update-type != 'version-update:semver-major'
+          && !contains(steps.metadata.outputs.dependency-names, 'anthropic')
+          && !contains(steps.metadata.outputs.dependency-names, 'claude')
         run: gh pr merge --auto --squash "$PR_URL"
         env:
           GH_REPO: ${{ github.repository }}

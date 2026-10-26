@@ -130,7 +130,10 @@ CI's `generated` job runs both checks.
   issue when it fails.
 - `.github/workflows/commit-lint.yml`: checks that the PR title is a Conventional
   Commit. The commit-msg hook checks individual commits locally.
-- `.github/workflows/dependabot-auto-merge.yml`: auto-merge for non-major Dependabot PRs.
+- `.github/workflows/dependabot-auto-merge.yml`: auto-merge for non-major Dependabot PRs,
+  except updates to Anthropic or Claude tooling, which a human reviews. Keep
+  Dependabot security updates off while this runs: they skip the cooldown, so a
+  just-published release would merge on CI alone.
 - `.github/dependabot.yml`: weekly updates for uv, GitHub Actions and pre-commit
   hooks, with a seven-day cooldown on new releases.
 
