@@ -1,0 +1,6 @@
+# Every path has the stewards as owners, so that "require review from code
+# owners" on main mirrors Guild's tiers 1 and above (blip-box/guild,
+# docs/adopting.md). The reject list in guild.toml is enforced by the tier
+# check, since path-restricted push rulesets are not available on public
+# repositories.
+*	@atillaguzel
