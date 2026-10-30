@@ -13,6 +13,10 @@ also detects invisible and direction-control characters (including Tag-block "AS
 smuggling"), offers grapheme-safe truncation, and ships `confusable.compat.homoglyphs`
 with the API of `confusable_homoglyphs` 3.3.1.
 
+[CHARTER.md](CHARTER.md) says why: the mission, scope, non-goals and principles
+as numbered clauses (`C-SPEC-1`). This file says how. Cite a clause by ID when
+accepting or declining a request; a change to the charter needs a steward.
+
 ## Current state
 
 Packaging, CI, the conformance harness, generated Unicode tables for every v1
@@ -86,6 +90,10 @@ CI's `generated` job runs both checks.
 
 ## Layout
 
+- `CHARTER.md`: the project's mission, scope, non-goals and principles as
+  numbered clauses. `tests/test_charter.py` checks that clause IDs stay unique
+  and consecutive, that every path its enforcement table names exists, and
+  that `AGENTS.md`, `CLAUDE.md` and `CHARTER.md` are ASCII.
 - `src/confusable/`: the package. It ships `py.typed`; mypy runs in strict mode.
 - `src/confusable/_skeleton.py`: `skeleton`, `match` and `Match` (UTS #39 section 4).
 - `src/confusable/_scripts.py`: augmented and resolved script sets (section 5.1).
@@ -153,8 +161,10 @@ CI's `generated` job runs both checks.
   reproduce.
 - Python source is ASCII. Write every other character as an escape (`"p\u0430ypal"`),
   so no look-alike, invisible or bidirectional character can hide in the code; other
-  tracked files may use visible non-ASCII characters but none of those.
-  `tests/test_source_hygiene.py` and ruff's `PLE25` rules enforce this. Agents: a
+  tracked files may use visible non-ASCII characters but none of those, except
+  `AGENTS.md`, `CLAUDE.md` and `CHARTER.md`, which agents read as instructions
+  and which are ASCII too. `tests/test_source_hygiene.py`, ruff's `PLE25` rules
+  and `tests/test_charter.py` enforce this. Agents: a
   `\u` escape written in a tool parameter can reach the file as the literal
   character, so check the bytes after writing one.
 - Do not use Python's `unicodedata` for data the specifications define: it follows
