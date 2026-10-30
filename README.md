@@ -156,8 +156,9 @@ uv run pytest
 uv run pre-commit run --all-files
 ```
 
-[AGENTS.md](AGENTS.md) has the project's conventions, for people and coding agents
-alike.
+[CHARTER.md](CHARTER.md) says what the project is for and the principles every
+change is held to. [AGENTS.md](AGENTS.md) has the conventions, for people and
+coding agents alike.
 
 ## Security
 
