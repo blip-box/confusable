@@ -135,9 +135,10 @@ def _skeleton(text: str, direction: str) -> tuple[object, object] | None:
     return oracle, _SKELETON_FUNCTION[direction](text)
 
 
+# Looked up at call time, so the adapter can be patched in tests.
 _SKELETON_FUNCTION: dict[str, Callable[[str], str]] = {
-    "ltr": adapter.skeleton,
-    "None": adapter.internal_skeleton,
+    "ltr": lambda t: adapter.skeleton(t),
+    "None": lambda t: adapter.internal_skeleton(t),
     "rtl": lambda t: adapter.bidi_skeleton(t, "RTL"),
 }
 _SKELETON_KIND: dict[str, Literal["skeleton", "internal", "rtl"]] = {
