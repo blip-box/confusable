@@ -33,6 +33,16 @@ def test_fields_are_read_by_label() -> None:
     assert form["Specification clause"] == "UTS #39 section 4"
 
 
+def test_a_label_that_is_not_collected_ends_the_field_before_it() -> None:
+    # The bug form ends with a dropdown; its label and answer must not run
+    # into the field before it.
+    dropdown = "Was an AI tool used to find or write this report?"
+    form = check.fields(body() + f"\n{dropdown}\n\nNo\n")
+    assert form["Specification clause"] == "UTS #39 section 4"
+    assert dropdown not in form
+    assert "No" not in form.values()
+
+
 def test_decode_and_other_argument() -> None:
     assert check.decode(PAYPAL) == "p" + chr(0x430) + "yp" + chr(0x430) + "l"
     assert check.other_argument('text, "paypal"') == "paypal"

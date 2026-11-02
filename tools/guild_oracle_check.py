@@ -53,6 +53,13 @@ LABELS = (
     "Library version",
     "Specification clause",
 )
+# Labels the forms show after those, which end the field before them and are
+# not collected: the dropdowns of the bug and feature forms. Without them the
+# last field would run on into the dropdown's label and answer.
+OTHER_LABELS = (
+    "Was an AI tool used to find or write this report?",
+    "Was an AI tool used to write this request?",
+)
 _CODE_POINT = re.compile(r"U\+([0-9A-Fa-f]{4,6})")
 _CALL = re.compile(r"^\s*([a-z_]+)\s*\((.*)\)\s*$", re.DOTALL)
 _DIRECTION = re.compile(r"direction\s*=\s*[\"']?(ltr|rtl|auto|None)[\"']?")
@@ -69,6 +76,8 @@ def fields(body: str) -> dict[str, str]:
         if stripped in LABELS:
             current = stripped
             found[current] = []
+        elif stripped in OTHER_LABELS:
+            current = None
         elif current is not None and stripped:
             found[current].append(stripped)
     return {label: "\n".join(lines) for label, lines in found.items()}
