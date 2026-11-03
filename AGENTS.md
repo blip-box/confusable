@@ -60,7 +60,7 @@ The core API is complete: no conformance test is an xfail. So is
 | Compat module | `confusable.compat.homoglyphs` has the modules `categories` and `confusables` of confusable_homoglyphs 3.3.1, with its functions, signatures, results and lazily built `categories_data` and `confusables_data`. Its data is rebuilt from the pinned Unicode files by that package's own rules, except that the confusable pairs come from the code point fields of confusables.txt: the package's generator reads them from the comments, which wrap right-to-left characters in LEFT-TO-RIGHT MARKs (so its data misses every Arabic and Hebrew look-alike) and show four space-like characters, HANGUL FILLER among them, as blanks it cannot parse. Results hold fresh lists. No command line and no CONFUSABLE_DATA. The oracle is the real package, installed by hash into `tools/oracles/homoglyphs/.build/`. |
 | v1 scope | `skeleton()`, a two-string comparison (do not call it `is_confusable()` on a module named `confusable`), restriction levels, mixed-script detection, identifier status and type, invisible and control characters, UAX #31 `isxidstart`/`isxidcontinue` equivalents, grapheme iteration and safe truncation, and the compat module. |
 | Out of scope | Transliteration (use `anyascii`), generating confusable variants. |
-| Guild | The shell in `blip-box/guild`, pinned by commit in the repository variable `GUILDKIT_REF`. `guild.toml` holds the stewards, the risk tiers with the reject list of files agents may not change, and the pinned models with their prices; changing it is tier 2. `.github/workflows/guild-triage.yml` is the shell's template, copied; `tools/guild_oracle_check.py` answers whether the committed fixtures confirm a bug report's reproducer (`confirms`, `disagrees`, `not_applicable`, `not_run`, `error`); the issue forms give it its fields. Agents comment as the Triage App and cite `CHARTER.md` clauses by ID. Shadow mode: nothing merges without a steward. |
+| Guild | The shell in `blip-box/guild`, pinned by commit in the repository variable `GUILDKIT_REF`. `guild.toml` holds the stewards, the risk tiers with the reject list of files agents may not change, the agents' models, limits and test command, and their prices; changing it is tier 2. `.github/workflows/guild-triage.yml` and `guild-build.yml` are the shell's templates, copied; the build workflow runs on a steward's `/guild plan` or `/guild build` comment, and the Builder App opens a draft pull request with a commit it signs; `tools/guild_oracle_check.py` answers whether the committed fixtures confirm a bug report's reproducer (`confirms`, `disagrees`, `not_applicable`, `not_run`, `error`); the issue forms give it its fields. Agents comment as the Triage App and cite `CHARTER.md` clauses by ID. Shadow mode: nothing merges without a steward. |
 
 ## Commands
 
@@ -96,8 +96,9 @@ CI's `generated` job runs both checks.
 - `guild.toml`: the Guild configuration (see Decisions). `.github/CODEOWNERS`
   makes the stewards owners of every path, so that "require review from code
   owners" mirrors the tiers; `.github/ISSUE_TEMPLATE/`: the bug, feature and
-  question forms the triage reads; `.github/workflows/guild-triage.yml`: the
-  triage workflow; `tools/guild_oracle_check.py`: the oracle check, tested by
+  question forms the triage reads; `.github/workflows/guild-triage.yml` and
+  `guild-build.yml`: the triage and build workflows;
+  `tools/guild_oracle_check.py`: the oracle check, tested by
   `tests/test_guild_oracle_check.py`.
 - `CHARTER.md`: the project's mission, scope, non-goals and principles as
   numbered clauses. `tests/test_charter.py` checks that clause IDs stay unique
