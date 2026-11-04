@@ -95,12 +95,14 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
-          state=$(gh api "repos/$GH_REPO/actions/workflows" --jq '.workflows[] | select(.path == ".github/workflows/unicode-release.yml") | .state')
-          # Empty until the workflow first reaches the default branch.
-          if [ -n "$state" ] && [ "$state" != "active" ]; then
-            echo "::error::unicode-release.yml is $state. Re-enable it: gh workflow enable unicode-release.yml"
-            exit 1
-          fi
+          for name in unicode-release.yml guild-batch.yml guild-report.yml; do
+            state=$(gh api "repos/$GH_REPO/actions/workflows" --jq ".workflows[] | select(.path == \".github/workflows/$name\") | .state")
+            # Empty until the workflow first reaches the default branch.
+            if [ -n "$state" ] && [ "$state" != "active" ]; then
+              echo "::error::$name is $state. Re-enable it: gh workflow enable $name"
+              exit 1
+            fi
+          done
 
   required:
     name: required
