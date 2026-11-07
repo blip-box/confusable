@@ -8,8 +8,9 @@
 # Nothing a model wrote reaches the issue: comments come from templates.
 #
 # Needs: the variable GUILDKIT_REF (a commit of blip-box/guild), the variable
-# GUILD_TRIAGE_APP_ID and the secret GUILD_TRIAGE_APP_KEY (a GitHub App with
-# issues: write, installed on this repository), and for the model credential
+# GUILD_TRIAGE_CLIENT_ID (the Client ID of a GitHub App with issues: write,
+# installed on this repository) and the secret GUILD_TRIAGE_APP_KEY (its
+# private key), and for the model credential
 # either workload identity federation (variables ANTHROPIC_FEDERATION_RULE_ID,
 # ANTHROPIC_ORGANIZATION_ID, ANTHROPIC_SERVICE_ACCOUNT_ID and, for a rule over
 # several workspaces, ANTHROPIC_WORKSPACE_ID) or, until that exists, the
@@ -252,7 +253,7 @@ jobs:
       - uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         id: app
         with:
-          app-id: ${{ vars.GUILD_TRIAGE_APP_ID }}
+          client-id: ${{ vars.GUILD_TRIAGE_CLIENT_ID }}
           private-key: ${{ secrets.GUILD_TRIAGE_APP_KEY }}
           permission-issues: write
       - name: Post
@@ -302,7 +303,7 @@ jobs:
       - uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         id: app
         with:
-          app-id: ${{ vars.GUILD_TRIAGE_APP_ID }}
+          client-id: ${{ vars.GUILD_TRIAGE_CLIENT_ID }}
           private-key: ${{ secrets.GUILD_TRIAGE_APP_KEY }}
           permission-issues: write
       - name: Post
@@ -348,7 +349,7 @@ jobs:
       - uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         id: app
         with:
-          app-id: ${{ vars.GUILD_BUILDER_APP_ID }}
+          client-id: ${{ vars.GUILD_BUILDER_CLIENT_ID }}
           private-key: ${{ secrets.GUILD_BUILDER_APP_KEY }}
           permission-contents: write
       - name: Append
