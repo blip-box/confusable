@@ -60,7 +60,7 @@ The core API is complete: no conformance test is an xfail. So is
 | Compat module | `confusable.compat.homoglyphs` has the modules `categories` and `confusables` of confusable_homoglyphs 3.3.1, with its functions, signatures, results and lazily built `categories_data` and `confusables_data`. Its data is rebuilt from the pinned Unicode files by that package's own rules, except that the confusable pairs come from the code point fields of confusables.txt: the package's generator reads them from the comments, which wrap right-to-left characters in LEFT-TO-RIGHT MARKs (so its data misses every Arabic and Hebrew look-alike) and show four space-like characters, HANGUL FILLER among them, as blanks it cannot parse. Results hold fresh lists. No command line and no CONFUSABLE_DATA. The oracle is the real package, installed by hash into `tools/oracles/homoglyphs/.build/`. |
 | v1 scope | `skeleton()`, a two-string comparison (do not call it `is_confusable()` on a module named `confusable`), restriction levels, mixed-script detection, identifier status and type, invisible and control characters, UAX #31 `isxidstart`/`isxidcontinue` equivalents, grapheme iteration and safe truncation, and the compat module. |
 | Out of scope | Transliteration (use `anyascii`), generating confusable variants. |
-| Guild | The shell in `blip-box/guild`, pinned by commit in the repository variable `GUILDKIT_REF`. `guild.toml` holds the stewards, the risk tiers with the reject list of files agents may not change, the agents' models, limits and test command, the Builder's second attempt (`[builder.second_attempt]`: a stronger setting, used once when the plain check refuses the first patch), and their prices; changing it is tier 2. `.github/workflows/guild-triage.yml`, `guild-build.yml`, `guild-batch.yml` and `guild-report.yml` are the shell's templates, copied; the build workflow runs on a steward's `/guild plan` or `/guild build` comment, and the Builder App opens a draft pull request with a commit it signs; every run appends its entries to `ledger.jsonl` on the `guild-ledger` branch, the brakes read it, the batch re-reads queued issues twice a day, and the weekly report comments the counts on an issue; `tools/guild_oracle_check.py` answers whether the committed fixtures confirm a bug report's reproducer (`confirms`, `disagrees`, `not_applicable`, `not_run`, `error`); the issue forms give it its fields. Agents comment as the Triage App and cite `CHARTER.md` clauses by ID. Shadow mode: nothing merges without a steward. |
+| Guild | The shell in `blip-box/guild`, pinned by commit in the repository variable `GUILDKIT_REF`. `guild.toml` holds the stewards, the risk tiers with the reject list of files agents may not change, the agents' models, limits and test command, the Builder's second attempt (`[builder.second_attempt]`: a stronger setting, used once when the plain check refuses the first patch), and their prices; changing it is tier 2. `.github/workflows/guild-triage.yml`, `guild-build.yml`, `guild-batch.yml`, `guild-report.yml` and `guild-release.yml` are the shell's templates, copied; the build workflow runs on a steward's `/guild plan` or `/guild build` comment, and the Builder App opens a draft pull request with a commit it signs; every run appends its entries to `ledger.jsonl` on the `guild-ledger` branch, the brakes read it, the batch re-reads queued issues twice a day, the weekly report comments the counts on an issue, and the release workflow proposes a release as an issue after a merged fix or feature to the library or four weeks of other changes (`[release]` in `guild.toml`; a steward runs the release, tier 3); `tools/guild_oracle_check.py` answers whether the committed fixtures confirm a bug report's reproducer (`confirms`, `disagrees`, `not_applicable`, `not_run`, `error`); the issue forms give it its fields. Agents comment as the Triage App and cite `CHARTER.md` clauses by ID. Shadow mode: nothing merges without a steward. |
 
 ## Commands
 
@@ -97,8 +97,8 @@ CI's `generated` job runs both checks.
   makes the stewards owners of every path, so that "require review from code
   owners" mirrors the tiers; `.github/ISSUE_TEMPLATE/`: the bug, feature and
   question forms the triage reads; `.github/workflows/guild-triage.yml`,
-  `guild-build.yml`, `guild-batch.yml` and `guild-report.yml`: the triage,
-  build, batch and report workflows;
+  `guild-build.yml`, `guild-batch.yml`, `guild-report.yml` and
+  `guild-release.yml`: the triage, build, batch, report and release workflows;
   `tools/guild_oracle_check.py`: the oracle check, tested by
   `tests/test_guild_oracle_check.py`.
 - `CHARTER.md`: the project's mission, scope, non-goals and principles as
@@ -149,8 +149,10 @@ CI's `generated` job runs both checks.
   issue when it fails.
 - `.github/workflows/commit-lint.yml`: checks that the PR title is a Conventional
   Commit. The commit-msg hook checks individual commits locally.
-- `.github/workflows/guild-batch.yml` and `guild-report.yml`: scheduled, listed
-  in the `scheduled` job; both open an issue when they fail.
+- `.github/workflows/guild-batch.yml`, `guild-report.yml` and
+  `guild-release.yml`: scheduled, listed in the `scheduled` job; all three
+  open an issue when they fail. The release workflow also runs on every push
+  to `main`.
 - `.github/workflows/dependabot-auto-merge.yml`: auto-merge for non-major Dependabot PRs,
   except updates to Anthropic or Claude tooling, which a human reviews. Keep
   Dependabot security updates off while this runs: they skip the cooldown, so a

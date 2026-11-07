@@ -95,7 +95,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
-          for name in unicode-release.yml guild-batch.yml guild-report.yml; do
+          for name in unicode-release.yml guild-batch.yml guild-report.yml guild-release.yml; do
             state=$(gh api "repos/$GH_REPO/actions/workflows" --jq ".workflows[] | select(.path == \".github/workflows/$name\") | .state")
             # Empty until the workflow first reaches the default branch.
             if [ -n "$state" ] && [ "$state" != "active" ]; then
