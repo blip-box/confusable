@@ -120,6 +120,11 @@ copies the invisible LEFT-TO-RIGHT MARKs that `confusables.txt` puts around
 right-to-left characters in its comments. For new code, prefer `match` and
 `restriction_level`, which follow UTS #39.
 
+Code that cannot change its import can give `confusable_homoglyphs` itself this
+data: `python -m confusable.compat.homoglyphs export DIR` writes its two data
+files, and the unchanged package loads them when the `CONFUSABLE_DATA`
+environment variable names `DIR` before the interpreter starts.
+
 ## What it is for
 
 `confusable` decides whether user-supplied text is safe to accept as an identity: a
