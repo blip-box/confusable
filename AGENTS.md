@@ -34,7 +34,8 @@ their conformance tests; and the joining-control contexts of section 3.1.1.1
 (`find_invisible()`, `has_invisible()`, `Invisible`), which no oracle implements.
 The core API is complete: no conformance test is an xfail. So is
 `confusable.compat.homoglyphs`, which is checked against confusable_homoglyphs
-3.3.1 itself. The first alpha on PyPI is next.
+3.3.1 itself. The first alpha, 0.1.0a1, is on PyPI, published by `publish.yml`
+from the tag `v0.1.0a1`.
 
 ## Decisions
 
@@ -257,15 +258,16 @@ its hash pins it.
 
 ## Roadmap
 
-Each item is its own pull request:
-
-1. First alpha on PyPI: bump the version to `0.1.0a1` in both places, merge,
-   tag the merge commit `v0.1.0a1`. `publish.yml` does the rest, once the
-   pending publisher is registered on PyPI.
+Nothing is queued; each future item is its own pull request. The Guild
+release workflow proposes the next release when a fix or feature to the
+library lands, or after four weeks of other changes, and a steward runs it:
+bump the version in both places, merge, tag the merge commit `vX.Y.Z`, and
+`publish.yml` does the rest.
 
 Done: skeletons and `match`, mixed scripts and restriction levels,
 identifiers, joining controls, invisible characters, the section 5.3 and 5.4
-checks, graphemes, and `confusable.compat.homoglyphs`.
+checks, graphemes, `confusable.compat.homoglyphs`, and the first alpha,
+0.1.0a1, on PyPI.
 
 ## References
 

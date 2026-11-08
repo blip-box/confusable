@@ -4,10 +4,12 @@ Unicode spoofing and confusable detection for Python, following
 [Unicode Technical Standard #39](https://www.unicode.org/reports/tr39/). Pure Python,
 no runtime dependencies.
 
-> **Status: pre-alpha.** Look-alike detection (`skeleton`, `match`), mixed-script
+> **Status: alpha.** Look-alike detection (`skeleton`, `match`), mixed-script
 > detection, restriction levels, the identifier checks, the mixed-number and
 > combining-mark checks, invisible-character detection, grapheme clusters and the
-> compatibility module work and pass their tests. Nothing is on PyPI yet.
+> compatibility module work and pass their tests. The first alpha is on PyPI:
+> `pip install confusable==0.1.0a1` (pip skips pre-releases unless the version
+> is pinned or `--pre` is given).
 
 ## Usage
 
