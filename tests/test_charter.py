@@ -53,4 +53,7 @@ def test_instruction_files_are_ascii(name: str) -> None:
 
 @pytest.mark.parametrize("name", ["AGENTS.md", "README.md"])
 def test_handbook_and_readme_link_to_the_charter(name: str) -> None:
-    assert "(CHARTER.md)" in (ROOT / name).read_text(encoding="utf-8")
+    """The README's links are absolute, so that they work on PyPI too."""
+    text = (ROOT / name).read_text(encoding="utf-8")
+    link = r"\((?:https://github\.com/blip-box/confusable/blob/main/)?CHARTER\.md\)"
+    assert re.search(link, text), name

@@ -7,9 +7,16 @@ no runtime dependencies.
 > **Status: alpha.** Look-alike detection (`skeleton`, `match`), mixed-script
 > detection, restriction levels, the identifier checks, the mixed-number and
 > combining-mark checks, invisible-character detection, grapheme clusters and the
-> compatibility module work and pass their tests. The first alpha is on PyPI:
-> `pip install confusable==0.1.0a1` (pip skips pre-releases unless the version
+> compatibility module work and pass their tests. The alphas are on PyPI:
+> `pip install confusable==0.1.0a2` (pip skips pre-releases unless the version
 > is pinned or `--pre` is given).
+
+Not to be confused with [`confusables`](https://pypi.org/project/confusables/)
+(1.2.0, from 2021), which matches words that can be confused for each other, or
+with [`confusable_homoglyphs`](https://pypi.org/project/confusable-homoglyphs/)
+(3.3.1), whose API this package provides as `confusable.compat.homoglyphs`. Every
+release of `confusable` is published from this repository's own workflow and
+carries a [provenance attestation](https://docs.pypi.org/attestations/) on PyPI.
 
 ## Usage
 
@@ -147,7 +154,7 @@ operation is checked against two independent implementations of UTS #39, ICU and
 the Rust `unicode-security` crate, over every Unicode code point and a corpus of
 known attacks and generated strings. Both oracles run at the pinned Unicode
 version, and every place where they differ is explained by a specific rule. See
-[tools/oracles/README.md](tools/oracles/README.md).
+[tools/oracles/README.md](https://github.com/blip-box/confusable/blob/main/tools/oracles/README.md).
 
 ## Development
 
@@ -158,16 +165,16 @@ uv run pytest
 uv run pre-commit run --all-files
 ```
 
-[CHARTER.md](CHARTER.md) says what the project is for and the principles every
-change is held to. [AGENTS.md](AGENTS.md) has the conventions, for people and
+[CHARTER.md](https://github.com/blip-box/confusable/blob/main/CHARTER.md) says what the project is for and the principles every
+change is held to. [AGENTS.md](https://github.com/blip-box/confusable/blob/main/AGENTS.md) has the conventions, for people and
 coding agents alike.
 
 ## Security
 
-To report a vulnerability, see [SECURITY.md](.github/SECURITY.md).
+To report a vulnerability, see [SECURITY.md](https://github.com/blip-box/confusable/blob/main/.github/SECURITY.md).
 
 ## License
 
-MIT. See [LICENSE](LICENSE). The Unicode data the package and its test fixtures are
+MIT. See [LICENSE](https://github.com/blip-box/confusable/blob/main/LICENSE). The Unicode data the package and its test fixtures are
 generated from is under the Unicode License v3; see
-[LICENSES/Unicode-3.0.txt](LICENSES/Unicode-3.0.txt).
+[LICENSES/Unicode-3.0.txt](https://github.com/blip-box/confusable/blob/main/LICENSES/Unicode-3.0.txt).
