@@ -15,6 +15,13 @@ def test_version_matches_distribution_metadata() -> None:
     assert confusable.__version__ == importlib.metadata.version("confusable")
 
 
+def test_metadata_ships_the_unicode_notice() -> None:
+    """The generated tables name LICENSES/Unicode-3.0.txt, so the wheel ships it."""
+    files = importlib.metadata.metadata("confusable").get_all("License-File") or []
+    assert "LICENSE" in files
+    assert "LICENSES/Unicode-3.0.txt" in files
+
+
 def test_has_no_runtime_dependencies() -> None:
     requirements = importlib.metadata.requires("confusable") or []
     assert [r for r in requirements if "extra ==" not in r] == []

@@ -43,7 +43,8 @@ The core API is complete: no conformance test is an xfail. So is
 | Runtime dependencies | None. No C extensions. |
 | Tooling security floors | `required-version = ">=0.13.4"` for uv and `virtualenv>=21.14.13` in the lint group, after the October 2026 eMudhra/emSign CA compromise: older uv and the pip that older virtualenv seeds into pre-commit hooks still trust the compromised root. Keep floors (`>=`) for such fixes so a re-lock cannot regress. CI runs no Node except the runner's own, which GitHub patches. |
 | Python | `>=3.10`. CI tests 3.10 to 3.15 on Linux and 3.15 on macOS and Windows. |
-| License | MIT for the code. Unicode data files are under the Unicode License v3; ship that notice next to the generated data. |
+| License | MIT for the code. Unicode data files are under the Unicode License v3; the generated modules name `LICENSES/Unicode-3.0.txt`, and `license-files` in `pyproject.toml` ships it in the sdist and the wheel, under `dist-info/licenses/`. `tests/test_package.py` checks the metadata lists it. |
+| Publishing | PyPI through trusted publishing, from `.github/workflows/publish.yml` on a `v*` tag: it checks that the tag names the version, runs the tests again on the tagged commit, builds the sdist and the wheel with `uv build`, uploads them from the `pypi` environment, which only `v*` tags may deploy to, with attestations, and creates the GitHub Release, marked pre-release for alpha, beta, release-candidate and dev versions. PyPI's pending publisher names this repository, that workflow file and that environment, so no API token exists anywhere. A steward runs a release (`C-GOV-1`): bump the version, merge, tag the merge commit, push the tag. |
 | Unicode data | Generated Python tables are committed, so installs need no network. |
 | Import time | `import confusable` loads no generated table: each module loads the tables it needs on first use, through `functools.cache` functions that import from `confusable._data` (see `_identifiers.py`). Without cached bytecode (`PYTHONDONTWRITEBYTECODE=1`, read-only installs) the tables take about 100 ms to import. No dataclasses or `NamedTuple` either: they import `inspect` and `ast`, or `annotationlib` on Python 3.14, which costs milliseconds. `tests/test_package.py` checks both in a fresh interpreter. |
 | Unicode version | 18.0.0, pinned in `tools/unicode_sources.py`; the table generator copies it into `confusable._data`, and the package exposes it as `confusable.unicode_version`. |
@@ -149,6 +150,8 @@ CI's `generated` job runs both checks.
   issue when it fails.
 - `.github/workflows/commit-lint.yml`: checks that the PR title is a Conventional
   Commit. The commit-msg hook checks individual commits locally.
+- `.github/workflows/publish.yml`: builds and publishes a `v*` tag to PyPI
+  and creates its GitHub Release (see Publishing in Decisions).
 - `.github/workflows/guild-batch.yml`, `guild-report.yml` and
   `guild-release.yml`: scheduled, listed in the `scheduled` job; all three
   open an issue when they fail. The release workflow also runs on every push
@@ -256,7 +259,9 @@ its hash pins it.
 
 Each item is its own pull request:
 
-1. First alpha on PyPI via trusted publishing.
+1. First alpha on PyPI: bump the version to `0.1.0a1` in both places, merge,
+   tag the merge commit `v0.1.0a1`. `publish.yml` does the rest, once the
+   pending publisher is registered on PyPI.
 
 Done: skeletons and `match`, mixed scripts and restriction levels,
 identifiers, joining controls, invisible characters, the section 5.3 and 5.4
