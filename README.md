@@ -126,7 +126,9 @@ files, and the unchanged package loads them when the `CONFUSABLE_DATA`
 environment variable names `DIR` before the interpreter starts. Where an
 environment variable is not an option, `confusable.compat.homoglyphs.install()`,
 called before anything imports `confusable_homoglyphs`, makes that import
-resolve to this module instead.
+resolve to this module instead. The data bug, how far it reaches and the three
+ways around it are explained in
+[docs/homoglyphs-data.md](https://github.com/blip-box/confusable/blob/main/docs/homoglyphs-data.md).
 
 ## What it is for
 

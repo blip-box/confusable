@@ -18,7 +18,10 @@ generator makes in two ways, both fixes:
   U+2029 PARAGRAPH SEPARATOR, U+3164 HANGUL FILLER and U+FFA0 HALFWIDTH
   HANGUL FILLER, the blank characters of "invisible" user names.
 
-Results hold fresh lists, so changing one does not change the data.
+Results hold fresh lists, so changing one does not change the data. The bug,
+how far it reaches and the three ways around it (the import above, and the two
+below) are explained in docs/homoglyphs-data.md:
+https://github.com/blip-box/confusable/blob/main/docs/homoglyphs-data.md
 
 Code that cannot change its import can give confusable_homoglyphs itself this
 data. ``export(directory)``, or on the command line::
