@@ -7,7 +7,8 @@ authors = [
     { name = "Atilla Guzel", email = "33524244+atillaguzel@users.noreply.github.com" }
 ]
 license = "MIT"
-license-files = ["LICENSE"]
+# The Unicode notice too: the generated modules in src/confusable/_data name it.
+license-files = ["LICENSE", "LICENSES/Unicode-3.0.txt"]
 requires-python = ">=3.10"
 dependencies = []
 keywords = [
