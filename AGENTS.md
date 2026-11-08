@@ -34,8 +34,8 @@ their conformance tests; and the joining-control contexts of section 3.1.1.1
 (`find_invisible()`, `has_invisible()`, `Invisible`), which no oracle implements.
 The core API is complete: no conformance test is an xfail. So is
 `confusable.compat.homoglyphs`, which is checked against confusable_homoglyphs
-3.3.1 itself. The first alpha, 0.1.0a1, is on PyPI, published by `publish.yml`
-from the tag `v0.1.0a1`.
+3.3.1 itself. The alphas are on PyPI, published by `publish.yml` from `v*` tags;
+the latest is 0.1.0a2.
 
 ## Decisions
 
