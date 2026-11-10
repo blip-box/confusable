@@ -1,6 +1,6 @@
 [project]
 name = "confusable"
-version = "0.1.0a2"
+version = "0.1.0a3"
 description = "Unicode spoofing and confusable detection (UTS #39) in pure Python."
 readme = "README.md"
 authors = [

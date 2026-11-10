@@ -8,7 +8,7 @@ no runtime dependencies.
 > detection, restriction levels, the identifier checks, the mixed-number and
 > combining-mark checks, invisible-character detection, grapheme clusters and the
 > compatibility module work and pass their tests. The alphas are on PyPI:
-> `pip install confusable==0.1.0a2` (pip skips pre-releases unless the version
+> `pip install confusable==0.1.0a3` (pip skips pre-releases unless the version
 > is pinned or `--pre` is given).
 
 Not to be confused with [`confusables`](https://pypi.org/project/confusables/)
