@@ -11,7 +11,7 @@ it reaches, and gives three ways to get correct data, from changing one import
 to changing nothing in your code.
 
 The package has done its job well for years, and the bug is a parsing detail
-in its data generator, not a flaw in its design. We have told its maintainer
+in its data generator, not a flaw in its design, and the fix there is small
 (see the end of this page).
 
 ## What the bug is
@@ -187,8 +187,10 @@ provided, not the package's `utils` or `cli` modules.
 
 ## Upstream
 
-We have reported the bug to the maintainer of `confusable_homoglyphs`, with an
-offer of a patch to the generator: read the two characters from the code
-point fields of each line, as `confusable.compat.homoglyphs` and its test
-oracle do, and take only the names from the comment. Until a release with
-corrected data is out, the three ways above work with the current one.
+The fix in `confusable_homoglyphs` itself is small: its generator should read
+the two characters from the code point fields of each line, as
+`confusable.compat.homoglyphs` and its test oracle do, and take only the names
+from the comment. The package moved from GitHub in 2024 and is maintained at
+[sr.ht/~valhalla/confusable_homoglyphs](https://sr.ht/~valhalla/confusable_homoglyphs/).
+Until a release with corrected data is out, the three ways above work with
+the current one.
