@@ -35,7 +35,7 @@ their conformance tests; and the joining-control contexts of section 3.1.1.1
 The core API is complete: no conformance test is an xfail. So is
 `confusable.compat.homoglyphs`, which is checked against confusable_homoglyphs
 3.3.1 itself. The alphas are on PyPI, published by `publish.yml` from `v*` tags;
-the latest is 0.1.0a2.
+the latest is 0.1.0a3.
 
 ## Decisions
 
