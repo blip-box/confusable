@@ -33,19 +33,39 @@ directory::
     export CONFUSABLE_DATA=/srv/app/confusable-data
 
 It reads the variable when it is first imported, so set it before the
-interpreter starts. The package's own command line, ``confusable_homoglyphs
-check`` and ``update``, is not provided. For new code, prefer confusable's own
-API: ``confusable.match`` and ``confusable.restriction_level`` follow UTS #39,
+interpreter starts.
+
+Where an environment variable is not an option, ``install()`` makes ``import
+confusable_homoglyphs`` import this package instead, by registering it and
+its two modules in ``sys.modules``, so that libraries such as
+django-registration use this data with no change to their code. Call it
+before anything imports confusable_homoglyphs, for example at the top of a
+Django settings module::
+
+    import confusable.compat.homoglyphs
+
+    confusable.compat.homoglyphs.install()
+
+It raises RuntimeError when confusable_homoglyphs is already imported, since
+the code that imported it holds its modules and would keep its data, and does
+nothing when called again. It is opt-in because it changes what other
+libraries get from their own import; only ``categories`` and ``confusables``
+are provided, not the package's ``utils`` or ``cli``.
+
+The package's own command line, ``confusable_homoglyphs check`` and
+``update``, is not provided. For new code, prefer confusable's own API:
+``confusable.match`` and ``confusable.restriction_level`` follow UTS #39,
 which these heuristics do not.
 """
 
 from __future__ import annotations
 
 import os
+import sys
 
 from confusable.compat.homoglyphs import categories, confusables
 
-__all__ = ["categories", "confusables", "export"]
+__all__ = ["categories", "confusables", "export", "install"]
 
 
 def export(directory: str | os.PathLike[str]) -> list[str]:
@@ -74,3 +94,30 @@ def export(directory: str | os.PathLike[str]) -> list[str]:
             json.dump(data, file)
         paths.append(path)
     return paths
+
+
+def install() -> None:
+    """Make ``import confusable_homoglyphs`` import this package.
+
+    Registers this package in ``sys.modules`` as ``confusable_homoglyphs``,
+    and ``categories`` and ``confusables`` as its modules, so that every
+    later import of confusable_homoglyphs, in any library, gets this data.
+    Does nothing when called again. Raises RuntimeError when
+    confusable_homoglyphs is already imported, because the code that
+    imported it holds its modules and would keep its data: call install()
+    first, before anything imports the package.
+    """
+    ours = {
+        "confusable_homoglyphs": sys.modules[__name__],
+        "confusable_homoglyphs.categories": categories,
+        "confusable_homoglyphs.confusables": confusables,
+    }
+    present = {name: sys.modules.get(name) for name in ours}
+    if all(module is ours[name] for name, module in present.items()):
+        return
+    if any(module is not None for module in present.values()):
+        raise RuntimeError(
+            "confusable_homoglyphs is already imported: call "
+            "confusable.compat.homoglyphs.install() before anything imports it"
+        )
+    sys.modules.update(ours)

@@ -123,7 +123,10 @@ right-to-left characters in its comments. For new code, prefer `match` and
 Code that cannot change its import can give `confusable_homoglyphs` itself this
 data: `python -m confusable.compat.homoglyphs export DIR` writes its two data
 files, and the unchanged package loads them when the `CONFUSABLE_DATA`
-environment variable names `DIR` before the interpreter starts.
+environment variable names `DIR` before the interpreter starts. Where an
+environment variable is not an option, `confusable.compat.homoglyphs.install()`,
+called before anything imports `confusable_homoglyphs`, makes that import
+resolve to this module instead.
 
 ## What it is for
 
