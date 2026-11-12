@@ -8,6 +8,8 @@ from __future__ import annotations
 from bisect import bisect_right
 from functools import cache
 
+from confusable._text import require_str
+
 
 @cache
 def _system_zeros() -> tuple[int, ...]:
@@ -53,6 +55,7 @@ def has_mixed_numbers(text: str) -> bool:
     >>> has_mixed_numbers("\u09ea\u09ea8")  # BENGALI DIGIT FOUR twice, then 8
     True
     """
+    require_str(text, "has_mixed_numbers")
     if text.isascii():
         return False
     return len(decimal_zeros(text)) > 1

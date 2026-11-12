@@ -19,6 +19,7 @@ from functools import cache
 from confusable import _joining
 from confusable._lookup import Ranges, Runs
 from confusable._normalize import nfc
+from confusable._text import require_str
 
 
 class Invisible(enum.Enum):
@@ -210,6 +211,7 @@ def find_invisible(text: str) -> list[tuple[int, Invisible]]:
     >>> find_invisible("\u2764\ufe0f \U0001f469\u200d\U0001f4bb")  # emoji
     []
     """
+    require_str(text, "find_invisible")
     candidates = _candidates()
     found = [match.start() for match in candidates.finditer(text)]
     if not found:
@@ -238,6 +240,7 @@ def has_invisible(text: str) -> bool:
     >>> has_invisible("paypal"), has_invisible("pay\u00adpal")  # SOFT HYPHEN
     (False, True)
     """
+    require_str(text, "has_invisible")
     if text.isascii():
         return not text.isprintable()  # only the controls
     return bool(find_invisible(text))

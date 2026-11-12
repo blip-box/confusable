@@ -15,6 +15,7 @@ from collections.abc import Iterator
 from functools import cache
 
 from confusable._lookup import Ranges, Runs
+from confusable._text import require_str
 
 _CONTROLS = frozenset({"CR", "LF", "Control"})
 _HANGUL_AFTER_L = frozenset({"L", "V", "LV", "LVT"})
@@ -141,10 +142,7 @@ def iter_graphemes(
     >>> [str(g) for g in iter_graphemes("abc")]
     ['a', 'b', 'c']
     """
-    if not isinstance(text, str):
-        raise TypeError(
-            f"iter_graphemes() argument 1 must be str, not {type(text).__name__}"
-        )
+    require_str(text, "iter_graphemes")
     # Checked here, not when iteration starts, as for unicodedata's.
     start, end, _ = slice(start, end).indices(len(text))
     return _segments(text, start, end)
@@ -192,6 +190,7 @@ def truncate(
     >>> truncate(flags, max_utf16_units=6) == flags[:2]
     True
     """
+    require_str(text, "truncate")
     limits = (max_graphemes, max_code_points, max_utf8_bytes, max_utf16_units)
     if all(limit is None for limit in limits):
         raise TypeError("truncate() needs at least one limit")

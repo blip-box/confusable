@@ -16,6 +16,21 @@ the test suite (`tests/test_recipes.py`).
 None of the checks needs the text normalized first: each gives the same answer
 for NFC and NFD text.
 
+A Python `str` can also hold lone surrogates, which are not Unicode text and
+cannot be encoded as UTF-8. `is_allowed` refuses them, but the checks for
+display names and filenames do not look for them, so those recipes start with
+this test:
+
+```python
+def is_text(value: str) -> bool:
+    """Return whether value is Unicode text, which a str need not be."""
+    try:
+        value.encode("utf-8")
+    except UnicodeEncodeError:
+        return False
+    return True
+```
+
 ## Usernames, handles and slugs
 
 ```python
@@ -104,6 +119,8 @@ is_reserved("administrator")  # False
 ```python
 def display_name_problem(name: str) -> str | None:
     """Return why name cannot be a display name, or None when it can."""
+    if not is_text(name):
+        return "not Unicode text"
     if confusable.has_invisible(name):
         return "an invisible or control character"
     if confusable.has_unlikely_marks(name):
@@ -133,6 +150,7 @@ def impersonates_staff(name: str) -> bool:
 ```python
 display_name_problem("Ana Lima \U0001f1e7\U0001f1f7")  # None: a flag
 display_name_problem("Ana\u200bLima")  # 'an invisible or control character'
+display_name_problem("Ana\ud800")  # 'not Unicode text': a lone surrogate
 display_name_problem("Z\u0301\u0301\u0301")  # 'combining marks that pile up'
 impersonates_staff("Support Tearn")  # True: rn for m
 impersonates_staff("SUPPORT TEAM")  # True
@@ -143,6 +161,8 @@ impersonates_staff("SUPPORT TEAM")  # True
 ```python
 def filename_problem(name: str) -> str | None:
     """Return why name cannot be an uploaded file's name, or None when it can."""
+    if not is_text(name):
+        return "not Unicode text"
     if confusable.has_invisible(name):
         return "an invisible or control character"
     _, dot, extension = name.rpartition(".")

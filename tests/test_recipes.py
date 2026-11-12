@@ -23,6 +23,7 @@ DEFINITIONS = (ast.Import, ast.ImportFrom, ast.FunctionDef, ast.Assign)
 # One list per Python block of the page, in order, with one entry per
 # top-level expression statement. Blocks that only define things have none.
 EXPECTED: list[list[object]] = [
+    [],  # is_text
     [],  # username_problem
     [
         None,  # username_problem("john_smith42")
@@ -45,6 +46,7 @@ EXPECTED: list[list[object]] = [
     [
         None,  # display_name_problem("Ana Lima " + a flag)
         "an invisible or control character",  # ("Ana\u200bLima")
+        "not Unicode text",  # ("Ana\ud800")
         "combining marks that pile up",  # ("Z\u0301\u0301\u0301")
         True,  # impersonates_staff("Support Tearn")
         True,  # impersonates_staff("SUPPORT TEAM")

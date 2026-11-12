@@ -6,6 +6,7 @@ import enum
 from functools import reduce
 
 from confusable import _identifiers, _scripts
+from confusable._text import require_str
 
 # UAX #31 revision 45, Table 5: the Recommended scripts, without Common and
 # Inherited. Bopomofo has been a Limited Use script since Unicode 17.
@@ -44,6 +45,7 @@ def is_mixed_script(text: str) -> bool:
     >>> is_mixed_script("\u3006\u5207")  # Japanese: Han with Hiragana
     False
     """
+    require_str(text, "is_mixed_script")
     return _scripts.resolved_script_set(text) == frozenset()
 
 
@@ -66,6 +68,7 @@ def restriction_level(text: str, *, joining_controls: bool = False) -> Restricti
     >>> restriction_level("pay pal")  # a space is outside the profile
     <RestrictionLevel.UNRESTRICTED: 6>
     """
+    require_str(text, "restriction_level")
     if not _identifiers.is_allowed(text, joining_controls=joining_controls):
         return RestrictionLevel.UNRESTRICTED
     if text.isascii():
