@@ -263,16 +263,34 @@ its hash pins it.
 
 ## Roadmap
 
-Nothing is queued; each future item is its own pull request. The Guild
-release workflow proposes the next release when a fix or feature to the
-library lands, or after four weeks of other changes, and a steward runs it:
-bump the version in both places, merge, tag the merge commit `vX.Y.Z`, and
-`publish.yml` does the rest.
+Next is the first beta, 0.1.0b1, with the classifier `Development Status ::
+4 - Beta`. From the beta on, a change to a public name, signature or result
+is a breaking change (`feat!` or `fix!`) and is named in the release notes.
+The beta ships when all of these are done, each its own pull request:
+
+1. The recipes: `docs/accepting-names.md`, linked from the README.
+2. The upstream reports C-SPEC-5 asks for: the UTS #39 fast-path text
+   (see Bidi fast path), the ICU patches in `tools/oracles/icu/patches/`,
+   and the differences `agreement.py` names that unicode-security still
+   has. Each patch's header gets its ticket's link.
+3. Input that is not text. Every public function raises `TypeError` for
+   anything but `str`, as `unicodedata` does; today the ASCII fast paths of
+   `has_unlikely_marks` and `truncate` accept ASCII `bytes`. And a decision,
+   pinned by tests, on lone surrogates, which a `str` can hold but which are
+   not Unicode text: `is_allowed` refuses them, but `has_invisible` passes
+   them, so the display-name recipe accepts them.
+4. An API review against the API clauses of `CHARTER.md`, after which the
+   names and signatures in `__all__` are frozen.
+
+The Guild release workflow proposes other releases when a fix or feature to
+the library lands, or after four weeks of other changes, and a steward runs
+it: bump the version in both places, merge, tag the merge commit `vX.Y.Z`,
+and `publish.yml` does the rest.
 
 Done: skeletons and `match`, mixed scripts and restriction levels,
 identifiers, joining controls, invisible characters, the section 5.3 and 5.4
-checks, graphemes, `confusable.compat.homoglyphs`, and the first alpha,
-0.1.0a1, on PyPI.
+checks, graphemes, `confusable.compat.homoglyphs`, and the alphas on PyPI,
+the latest 0.1.0a3.
 
 ## References
 
