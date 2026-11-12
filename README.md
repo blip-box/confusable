@@ -4,10 +4,9 @@ Unicode spoofing and confusable detection for Python, following
 [Unicode Technical Standard #39](https://www.unicode.org/reports/tr39/). Pure Python,
 no runtime dependencies.
 
-> **Status: alpha.** Look-alike detection (`skeleton`, `match`), mixed-script
-> detection, restriction levels, the identifier checks, the mixed-number and
-> combining-mark checks, invisible-character detection, grapheme clusters and the
-> compatibility module work and pass their tests. The alphas are on PyPI:
+> **Status: alpha.** Everything version 1 sets out to do is in place and passes
+> its conformance tests; names and signatures may still change before the beta.
+> The alphas are on PyPI:
 > `pip install confusable==0.1.0a3` (pip skips pre-releases unless the version
 > is pinned or `--pre` is given).
 
@@ -19,6 +18,11 @@ release of `confusable` is published from this repository's own workflow and
 carries a [provenance attestation](https://docs.pypi.org/attestations/) on PyPI.
 
 ## Usage
+
+Which checks to apply to usernames, display names and filenames, and how to
+refuse a name that looks like one you already have, is in
+[docs/accepting-names.md](https://github.com/blip-box/confusable/blob/main/docs/accepting-names.md).
+The examples below show each check on its own.
 
 ```python
 import confusable
@@ -133,7 +137,7 @@ ways around it are explained in
 ## What it is for
 
 `confusable` decides whether user-supplied text is safe to accept as an identity: a
-username, display name, project name, slug or filename. Planned for v1:
+username, display name, project name, slug or filename. Version 1 covers:
 
 - **Look-alike detection** with the UTS #39 skeleton algorithm, so that `pаypal`
   (with a Cyrillic `а`) and `paypal` compare as confusable.
@@ -152,7 +156,7 @@ username, display name, project name, slug or filename. Planned for v1:
   character, equivalent to Python 3.15's `unicodedata.iter_graphemes()`.
 - **A compatibility module**, `confusable.compat.homoglyphs`, with the same API as
   `confusable_homoglyphs` 3.3.1, so existing code can switch by changing one import,
-  and that package's tests run against it.
+  checked against that package itself.
 
 The Unicode data is pinned to a single Unicode version (18.0.0) and generated into the
 package, so installing needs no network access and no compiler.

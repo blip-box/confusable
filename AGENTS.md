@@ -143,7 +143,8 @@ CI's `generated` job runs both checks.
   tables derive from.
 - `docs/`: pages for users, linked from the README. `docs/homoglyphs-data.md`
   explains the confusable_homoglyphs data bug, how far it reaches and the three
-  ways around it.
+  ways around it; `docs/accepting-names.md` gives the recipes
+  for usernames, display names and filenames, run by `tests/test_recipes.py`.
 - `.github/workflows/ci.yml`: a `lint` job, the `test` matrix, a `generated` job that
   regenerates the data tables and the fixtures and fails on any difference, a
   `scheduled` job that fails while a scheduled workflow is disabled, and a
