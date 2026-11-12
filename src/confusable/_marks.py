@@ -13,6 +13,7 @@ from functools import cache
 
 from confusable._lookup import Runs
 from confusable._normalize import combining_classes, nfd
+from confusable._text import require_str
 
 # UTS #39 section 5.4: "Forbid sequences of more than 4 nonspacing marks".
 MAX_NONSPACING_MARKS = 4
@@ -89,6 +90,7 @@ def has_unlikely_marks(text: str) -> bool:
     >>> has_unlikely_marks("z\u0300\u0301\u0302\u0303\u0304")  # five marks
     True
     """
+    require_str(text, "has_unlikely_marks")
     if text.isascii():
         return False
     return any(
@@ -129,6 +131,7 @@ def has_hidden_overlay(text: str) -> bool:
     >>> has_hidden_overlay("i\u0307")  # the dot falls on i's own dot
     True
     """
+    require_str(text, "has_hidden_overlay")
     if text.isascii():
         return False
     decomposed = nfd(text)

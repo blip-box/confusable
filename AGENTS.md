@@ -52,6 +52,7 @@ the latest is 0.1.0a3.
 | New Unicode versions | A weekly workflow opens an issue with the checklist, rather than a PR: the move needs a person to read the new spec revisions and an ICU release for the oracles, which usually ships weeks after Unicode. `python -m tools.unicode_release prepare VERSION` does the mechanical part. |
 | Specification | UTS #39 revision 34. Its `skeleton(X)` is `bidiSkeleton(LTR, X)`, which applies the Unicode Bidirectional Algorithm (UAX #9 revision 52) before the confusable mapping. v1 implements the full algorithm. |
 | Bidi fast path | UTS #39 says left-to-right text without R or AL characters keeps its order. That is wrong: a shortcut must also rule out AN, RLE, RLO and RLI (see `src/confusable/_bidi.py`). |
+| Input | Every public function takes `str` and raises `TypeError` for anything else, `bytes` included, with CPython's wording (`skeleton() argument 1 must be str, not bytes`), through `_text.require_str`; the single-character functions raise it for any other length too. Lone surrogates are `str` but not Unicode text: the functions accept them, as `unicodedata` does, and answer from their properties (gc=Cs, Identifier_Status Restricted, so `is_allowed` refuses them), and the recipes refuse text that does not encode as UTF-8. `tests/test_arguments.py` checks both. |
 | Look-alike API | `skeleton(text, direction="ltr")`, where `direction` is `"ltr"`, `"rtl"`, `"auto"` (UTS #39's FS) or `None` for internalSkeleton; and `match(a, b, direction="ltr")`, which returns `None` when the strings are not confusable and otherwise one `Match`: `SINGLE_SCRIPT`, `MIXED_SCRIPT` or `WHOLE_SCRIPT`. The values are exclusive, and `Match.mixed_script` is true for both mixed kinds. `None` rather than a false object, so `is not None` checks are safe, and exclusive values so `==` cannot miss whole-script spoofs. |
 | Restriction levels | `restriction_level(text)` returns a `RestrictionLevel` IntEnum numbered as in UTS #39 (ASCII_ONLY=1 to UNRESTRICTED=6), so lower is more restrictive. The identifier profile is the General Security Profile. Step 7's Recommended scripts are UAX #31 revision 45 Table 5, kept in `_restriction.py` because no data file lists them; Bopomofo has been Limited Use since Unicode 17. |
 | Identifier profile | The General Security Profile (Identifier_Status=Allowed) under canonical equivalence, as UTS #39 section 3.1 says: each normalization segment passes if it is all Allowed in its NFD or its NFC form, so the answer does not depend on how the text is encoded. ICU and Rust test the characters as written; ICU patch 0006 makes the oracle follow the spec. `restriction_level` step 1 uses the same test. |
@@ -124,6 +125,8 @@ CI's `generated` job runs both checks.
 - `src/confusable/_bidi.py`: the Unicode Bidirectional Algorithm, for bidiSkeleton.
 - `src/confusable/_normalize.py`: NFD and NFC on the generated tables.
 - `src/confusable/_lookup.py`: lookups in the generated runs and ranges.
+- `src/confusable/_text.py`: `require_str`, the argument check of every public
+  function.
 - `src/confusable/_data/`: generated Unicode tables, one module per area (bidi,
   confusables, emoji, graphemes, homoglyphs, identifiers, joining, normalization,
   properties, scripts, variation). Never edit them by hand; ruff skips them.
@@ -268,18 +271,11 @@ Next is the first beta, 0.1.0b1, with the classifier `Development Status ::
 is a breaking change (`feat!` or `fix!`) and is named in the release notes.
 The beta ships when all of these are done, each its own pull request:
 
-1. The recipes: `docs/accepting-names.md`, linked from the README.
-2. The upstream reports C-SPEC-5 asks for: the UTS #39 fast-path text
+1. The upstream reports C-SPEC-5 asks for: the UTS #39 fast-path text
    (see Bidi fast path), the ICU patches in `tools/oracles/icu/patches/`,
    and the differences `agreement.py` names that unicode-security still
    has. Each patch's header gets its ticket's link.
-3. Input that is not text. Every public function raises `TypeError` for
-   anything but `str`, as `unicodedata` does; today the ASCII fast paths of
-   `has_unlikely_marks` and `truncate` accept ASCII `bytes`. And a decision,
-   pinned by tests, on lone surrogates, which a `str` can hold but which are
-   not Unicode text: `is_allowed` refuses them, but `has_invisible` passes
-   them, so the display-name recipe accepts them.
-4. An API review against the API clauses of `CHARTER.md`, after which the
+2. An API review against the API clauses of `CHARTER.md`, after which the
    names and signatures in `__all__` are frozen.
 
 The Guild release workflow proposes other releases when a fix or feature to
@@ -289,8 +285,9 @@ and `publish.yml` does the rest.
 
 Done: skeletons and `match`, mixed scripts and restriction levels,
 identifiers, joining controls, invisible characters, the section 5.3 and 5.4
-checks, graphemes, `confusable.compat.homoglyphs`, and the alphas on PyPI,
-the latest 0.1.0a3.
+checks, graphemes, `confusable.compat.homoglyphs`, the alphas on PyPI (the
+latest 0.1.0a3), the recipes in `docs/accepting-names.md`, and `TypeError`
+for input that is not text.
 
 ## References
 

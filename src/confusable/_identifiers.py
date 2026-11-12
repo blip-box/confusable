@@ -18,6 +18,7 @@ from functools import cache
 from confusable import _joining
 from confusable._lookup import Ranges, Runs
 from confusable._normalize import combining_classes, compositions, nfc, nfd
+from confusable._text import require_str
 
 
 @cache
@@ -169,6 +170,7 @@ def is_allowed(text: str, *, joining_controls: bool = False) -> bool:
     >>> is_allowed(persian), is_allowed(persian, joining_controls=True)
     (False, True)
     """
+    require_str(text, "is_allowed")
     allowed = _allowed()
     if text.isascii():
         return all(ord(c) in allowed for c in text)

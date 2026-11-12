@@ -12,6 +12,7 @@ from typing import Literal
 
 from confusable import _bidi, _scripts
 from confusable._normalize import nfd
+from confusable._text import require_str
 
 Direction = Literal["ltr", "rtl", "auto"]
 
@@ -91,6 +92,7 @@ def skeleton(text: str, direction: Direction | None = "ltr") -> str:
     >>> skeleton("invoice\u202egpj.exe")  # displays as invoiceexe.jpg
     'invoiceexe.jpg'
     """
+    require_str(text, "skeleton")
     if direction is None:
         return _internal_skeleton(text)
     if direction not in _BIDI_DIRECTION:
@@ -142,6 +144,8 @@ def match(a: str, b: str, direction: Direction | None = "ltr") -> Match | None:
     >>> print(match("paypal", "payqal"))
     None
     """
+    require_str(a, "match")
+    require_str(b, "match", 2)
     if skeleton(a, direction) != skeleton(b, direction):
         return None
     scripts_a = _scripts.resolved_script_set(a)
