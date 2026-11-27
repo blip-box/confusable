@@ -81,7 +81,7 @@ jobs:
           ref: ${{ vars.GUILDKIT_REF }}
           path: .guild
           persist-credentials: false
-      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
       - run: uv sync --locked --no-default-groups --project .guild
       - name: Steward
         # The login must be in guild.toml and must hold write permission now.
@@ -157,7 +157,7 @@ jobs:
           ref: ${{ vars.GUILDKIT_REF }}
           path: .guild
           persist-credentials: false
-      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
       - run: uv sync --locked --no-default-groups --project .guild
       - name: Write the issue
         # The issue without the comment: the snapshot is of the report.
@@ -204,7 +204,7 @@ jobs:
           ref: ${{ vars.GUILDKIT_REF }}
           path: .guild
           persist-credentials: false
-      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
       - run: uv sync --locked --no-default-groups --project .guild
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
@@ -275,7 +275,7 @@ jobs:
           ref: ${{ vars.GUILDKIT_REF }}
           path: .guild
           persist-credentials: false
-      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
       - run: uv sync --locked --no-default-groups --extra agents --project .guild
       - name: Sandbox dependencies
         # The Bash sandbox (agents.SANDBOX) is bubblewrap on Linux and needs
@@ -402,7 +402,7 @@ jobs:
           ref: ${{ vars.GUILDKIT_REF }}
           path: .guild
           persist-credentials: false
-      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
       - run: uv sync --locked --no-default-groups --project .guild
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
@@ -419,7 +419,7 @@ jobs:
             --charter-url "$CHARTER_URL" \
             --out-comment comment.md \
             --out-labels labels.json
-      - uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+      - uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3.4.0
         id: app
         with:
           client-id: ${{ vars.GUILD_TRIAGE_CLIENT_ID }}
@@ -462,7 +462,7 @@ jobs:
           ref: ${{ vars.GUILDKIT_REF }}
           path: .guild
           persist-credentials: false
-      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
       - run: uv sync --locked --no-default-groups --extra agents --project .guild
       - name: Sandbox dependencies
         # The Bash sandbox (agents.SANDBOX) is bubblewrap on Linux and needs
@@ -613,7 +613,7 @@ jobs:
           ref: ${{ vars.GUILDKIT_REF }}
           path: .guild
           persist-credentials: false
-      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
       - run: uv sync --locked --no-default-groups --project .guild
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
@@ -681,7 +681,7 @@ jobs:
           ref: ${{ vars.GUILDKIT_REF }}
           path: .guild
           persist-credentials: false
-      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
       - run: uv sync --locked --no-default-groups --extra agents --project .guild
       - name: Sandbox dependencies
         # The Bash sandbox (agents.SANDBOX) is bubblewrap on Linux and needs
@@ -811,7 +811,7 @@ jobs:
           ref: ${{ vars.GUILDKIT_REF }}
           path: .guild
           persist-credentials: false
-      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
       - run: uv sync --locked --no-default-groups --project .guild
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
@@ -871,7 +871,7 @@ jobs:
           ref: ${{ vars.GUILDKIT_REF }}
           path: .guild
           persist-credentials: false
-      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
       - run: uv sync --locked --no-default-groups --project .guild
       - name: Render
         env:
@@ -889,7 +889,7 @@ jobs:
             --charter-url "$CHARTER_URL" \
             --out-comment comment.md \
             --out-labels labels.json
-      - uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+      - uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3.4.0
         id: app
         with:
           client-id: ${{ vars.GUILD_TRIAGE_CLIENT_ID }}
@@ -930,7 +930,7 @@ jobs:
           ref: ${{ vars.GUILDKIT_REF }}
           path: .guild
           persist-credentials: false
-      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
       - run: uv sync --locked --no-default-groups --extra agents --project .guild
       - name: Sandbox dependencies
         # The Bash sandbox (agents.SANDBOX) is bubblewrap on Linux and needs
@@ -1062,7 +1062,7 @@ jobs:
           ref: ${{ vars.GUILDKIT_REF }}
           path: .guild
           persist-credentials: false
-      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
       - run: uv sync --locked --no-default-groups --project .guild
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
@@ -1107,7 +1107,7 @@ jobs:
             --head "$BASE" \
             --message "$RUNNER_TEMP/message.txt" \
             --out "$RUNNER_TEMP/commit.json"
-      - uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+      - uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3.4.0
         id: builder
         with:
           client-id: ${{ vars.GUILD_BUILDER_CLIENT_ID }}
@@ -1149,7 +1149,7 @@ jobs:
           tier=$(jq -r .tier "$RUNNER_TEMP/check/check.json" | tr '[:upper:]' '[:lower:]')
           gh label create "guild:$tier" --force --color 0e8a16 --description "Guild risk tier"
           gh pr edit "$branch" --add-label "guild:$tier"
-      - uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+      - uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3.4.0
         id: gate
         with:
           client-id: ${{ vars.GUILD_GATE_CLIENT_ID }}
@@ -1176,7 +1176,7 @@ jobs:
               details_url: $url, output: {title: $title, summary: $title, text: $text}}' \
             > "$RUNNER_TEMP/check-run.json"
           gh api -X POST "repos/$GH_REPO/check-runs" --input "$RUNNER_TEMP/check-run.json" --jq .id
-      - uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+      - uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3.4.0
         id: triage
         with:
           client-id: ${{ vars.GUILD_TRIAGE_CLIENT_ID }}
@@ -1224,14 +1224,14 @@ jobs:
           ref: ${{ vars.GUILDKIT_REF }}
           path: .guild
           persist-credentials: false
-      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
       - run: uv sync --locked --no-default-groups --project .guild
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           pattern: entry-*
           merge-multiple: true
           path: entries
-      - uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+      - uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3.4.0
         id: app
         with:
           client-id: ${{ vars.GUILD_BUILDER_CLIENT_ID }}
